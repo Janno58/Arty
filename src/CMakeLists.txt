@@ -1,4 +1,7 @@
-add_executable(arty Arty.cpp)
+add_executable(arty Arty.cpp
+        LevelGen.cpp LevelGen.h
+        Level.cpp Level.h
+        WorldScroll.cpp WorldScroll.h)
 
 set_target_properties(arty PROPERTIES
         CXX_STANDARD 23
