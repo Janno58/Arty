@@ -26,6 +26,22 @@ sf::Vector2f Level::GetSize() const {
 }
 
 ////////////////////////////////////////////////////////////////////////////////
+sf::Color Level::GetPixel(sf::Vector2f pos) const {
+    auto x = static_cast<unsigned long>(pos.x);
+    auto y = static_cast<unsigned long>(pos.y);
+    auto index = (x + y * static_cast<unsigned long>(width)) * 4;
+
+    sf::Color color;
+
+    color.r = pixels[index];
+    color.g = pixels[index+1];
+    color.b = pixels[index+2];
+    color.a = pixels[index+3];
+
+    return color;
+}
+
+////////////////////////////////////////////////////////////////////////////////
 void Level::draw(sf::RenderTarget &target, sf::RenderStates states) const {
     states.texture = &texture;
     target.draw(vertices, states);
