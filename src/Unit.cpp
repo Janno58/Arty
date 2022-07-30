@@ -1,4 +1,5 @@
 #include "Unit.h"
+#include "Config.h"
 #include <cmath>
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -14,8 +15,8 @@ Unit::Unit() {
     sprite.setTexture(texture);
     sprite.scale(scale, scale);
 
-    spriteCenterOffset.x = sprite.getGlobalBounds().width / 2;
-    spriteCenterOffset.y = sprite.getGlobalBounds().height / 2;
+    spriteCenterOffset.x = sprite.getGlobalBounds().width / 2.F;
+    spriteCenterOffset.y = sprite.getGlobalBounds().height / 2.F - 20.F;
 
     turretSprite.setTexture(turretTexture);
     turretSprite.scale(scale, scale);
@@ -25,6 +26,7 @@ Unit::Unit() {
     SetPosition(sf::Vector2f(430.F, 0.F));
 }
 
+////////////////////////////////////////////////////////////////////////////////
 void Unit::MouseMove(sf::Vector2f mousePos) {
     auto unitVec = sprite.getPosition() + spriteCenterOffset - mousePos;
 
@@ -35,7 +37,7 @@ void Unit::MouseMove(sf::Vector2f mousePos) {
 
 ////////////////////////////////////////////////////////////////////////////////
 void Unit::StepPhysics(float dt) {
-    velocity += (Gravity / inverseMass) * dt;
+    velocity += (GRAVITY / inverseMass) * dt;
     auto pos = sprite.getPosition();
     SetPosition(pos + (velocity * dt));
 }
@@ -61,13 +63,28 @@ auto Unit::GetSize() const -> sf::Vector2f {
 }
 
 ////////////////////////////////////////////////////////////////////////////////
+auto Unit::GetMuzzlePos() const -> sf::Vector2f {
+    auto xPos = turretSprite.getLocalBounds().width;
+    auto yPos = 0.F;
+
+    return turretSprite.getTransform().transformPoint(xPos, yPos);
+}
+
+////////////////////////////////////////////////////////////////////////////////
+auto Unit::GetRotationPoint() const -> sf::Vector2f {
+    auto xPos = 0.F;
+    auto yPos = 0.F;
+
+    return turretSprite.getTransform().transformPoint(xPos, yPos);
+}
+
+////////////////////////////////////////////////////////////////////////////////
 void Unit::SetVelocity(sf::Vector2f newVelocity) {
     velocity = newVelocity;
 }
 
 ////////////////////////////////////////////////////////////////////////////////
 void Unit::draw(sf::RenderTarget &target, sf::RenderStates states) const {
-
     target.draw(turretSprite, states);
     target.draw(sprite, states);
 }

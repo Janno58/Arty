@@ -2,7 +2,14 @@ add_executable(arty Arty.cpp
         LevelGen.cpp LevelGen.h
         Level.cpp Level.h
         WorldScroll.cpp WorldScroll.h
-        Unit.cpp Unit.h Physics.cpp Physics.h Input.cpp Input.h)
+        Unit.cpp Unit.h
+        Physics.cpp Physics.h
+        Input.cpp Input.h
+        Config.h
+        Vector.h
+        Projectile.cpp Projectile.h
+        TextureCache.cpp TextureCache.h
+        Pixel.h Pixel.cpp)
 
 set_target_properties(arty PROPERTIES
         CXX_STANDARD 23
