@@ -30,7 +30,7 @@ std::vector<Pixel> Projectile::Explode() {
     int xPos = static_cast<int>(pos.x);
     int yPos = static_cast<int>(pos.y);
 
-    return CreateCircle(xPos, yPos, 100);
+    return CreateCircle(xPos, yPos, 50);
 }
 
 ////////////////////////////////////////////////////////////////////////////////

@@ -34,7 +34,19 @@ int main() {
     sf::Time frameTimeAccumulator;
     const sf::Time fixedFrameTime = sf::milliseconds(10);
 
-    auto unit = Unit();
+    //
+    // Player tanks
+    //
+    std::vector<Unit> players;
+    players.emplace_back(texCache.GetTexture("tanks_tankGreen_body3.png"),
+                         texCache.GetTexture("tanks_turret1.png"),
+                         level.GetSpawn(0U));
+
+    players.emplace_back(texCache.GetTexture("tanks_tankNavy_body3.png"),
+                         texCache.GetTexture("tanks_turret1.png"),
+                         level.GetSpawn(1U));
+
+    std::vector<Unit>::size_type activePlayer = 0;
 
     std::vector<Projectile> shells;
 
@@ -42,6 +54,9 @@ int main() {
     bool running{true};
 
     while(running) {
+        //
+        // Events
+        //
         while(window.pollEvent(event)) {
             if( event.type == sf::Event::Closed ) {
                 running = false;
@@ -52,29 +67,36 @@ int main() {
             }
 
             else if( event.type == sf::Event::MouseMoved ) {
-                auto gMousePos = sf::Mouse::getPosition(window);
-                auto mousePos  = window.mapPixelToCoords(gMousePos);
-                unit.MouseMove(mousePos);
+                const auto gMousePos = sf::Mouse::getPosition(window);
+                const auto mousePos  = window.mapPixelToCoords(gMousePos);
+
+                players[activePlayer].MouseMove(mousePos);
             }
 
             else if( event.type == sf::Event::MouseButtonReleased &&
                     event.mouseButton.button == sf::Mouse::Left) {
-
-                const auto posBase= unit.GetRotationPoint();
-                const auto posTip = unit.GetMuzzlePos();
-                const auto vel = Normalize(posTip - posBase) * 400.F;
+                const auto posBase= players[activePlayer].GetRotationPoint();
+                const auto posTip = players[activePlayer].GetMuzzlePos();
+                const auto vel = Normalize(posTip - posBase) * 700.F;
 
                 shells.emplace_back(posTip, vel);
+                activePlayer++;
             }
         }
 
+        //
+        // Physics
+        //
         frameTimeAccumulator += frameClock.restart();
         while( frameTimeAccumulator >= fixedFrameTime ) {
             scroll.Scroll(Input::GetMapScroll(), fixedFrameTime);
-            unit.StepPhysics(fixedFrameTime.asSeconds());
 
-            if(Physics::Collides(level, unit)) {
-                unit.SetVelocity(-GRAVITY);
+            for(auto& tank : players) {
+                tank.StepPhysics(fixedFrameTime.asSeconds());
+
+                if(Physics::Collides(level, tank)) {
+                    tank.SetVelocity(-GRAVITY);
+                }
             }
 
             for(auto& shell : shells) {
@@ -84,17 +106,37 @@ int main() {
                     auto pixels = shell.Explode();
                     level.SetPixels(pixels);
                 }
+
+                for(auto& tank : players) {
+                    if(Physics::Collides(tank, shell)) {
+                        auto pixels = shell.Explode();
+                        level.SetPixels(pixels);
+                    }
+                }
             }
 
             frameTimeAccumulator -= fixedFrameTime;
         }
 
+        //
+        // Misc housekeeping
+        //
         shells.erase( std::remove_if(shells.begin(), shells.end(), [](const auto& shell){ return shell.HasExploded(); }), shells.end() );
 
+        if(activePlayer >= players.size()) {
+            activePlayer = 0U;
+        }
+
+        //
+        // Draw
+        //
         window.clear(sf::Color::White);
         window.setView(scroll.GetView());
         window.draw(level);
-        window.draw(unit);
+
+        for(auto& tank : players) {
+            window.draw(tank);
+        }
 
         for(auto& shell : shells) {
             window.draw(shell);

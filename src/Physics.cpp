@@ -26,4 +26,19 @@ bool Collides(const Level& level, const Projectile& shell)
     return pix != sf::Color::White;
 }
 
+////////////////////////////////////////////////////////////////////////////////
+bool Collides(const Unit& tank, const Projectile& shell) {
+    const auto tankBox = tank.GetGlobalBounds();
+    const auto tipPos = shell.GetTheTip();
+
+    if( !tankBox.contains(tipPos) ) {
+        return false;
+    }
+
+    const auto pix = tank.GetPixelGlobal(tipPos);
+    auto hit = pix != sf::Color(0,0,0,0);
+
+    return hit;
+}
+
 } /* ns Physics */

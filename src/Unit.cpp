@@ -3,27 +3,21 @@
 #include <cmath>
 
 ////////////////////////////////////////////////////////////////////////////////
-Unit::Unit() {
-    if(!texture.loadFromFile("tanks_tankGreen_body3.png")) {
-        throw std::runtime_error("Error loading texture!");
-    }
-
-    if(!turretTexture.loadFromFile("tanks_turret1.png")) {
-        throw std::runtime_error("Error loading texture!");
-    }
-
-    sprite.setTexture(texture);
+Unit::Unit(const sf::Texture& tex, const sf::Texture& turretTex, sf::Vector2f spawnPos) {
+    sprite.setTexture(tex);
     sprite.scale(scale, scale);
 
     spriteCenterOffset.x = sprite.getGlobalBounds().width / 2.F;
     spriteCenterOffset.y = sprite.getGlobalBounds().height / 2.F - 20.F;
 
-    turretSprite.setTexture(turretTexture);
+    turretSprite.setTexture(turretTex);
     turretSprite.scale(scale, scale);
     turretSprite.setOrigin(0.F, turretSprite.getLocalBounds().height / 2);
     turretOffset = sf::Vector2f(sprite.getGlobalBounds().width / 2, 5.F);
 
-    SetPosition(sf::Vector2f(430.F, 0.F));
+    SetPosition(spawnPos);
+
+    pixels = tex.copyToImage();
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -43,21 +37,32 @@ void Unit::StepPhysics(float dt) {
 }
 
 ////////////////////////////////////////////////////////////////////////////////
+sf::FloatRect Unit::GetGlobalBounds() const {
+    return sprite.getGlobalBounds();
+}
+
+////////////////////////////////////////////////////////////////////////////////
+sf::Color Unit::GetPixelGlobal(sf::Vector2f position) const {
+    const auto& transform = sprite.getInverseTransform();
+    const auto pos = transform.transformPoint(position);
+    return pixels.getPixel(static_cast<unsigned int>(pos.x), static_cast<unsigned int>(pos.y));
+}
+
+////////////////////////////////////////////////////////////////////////////////
 auto Unit::GetPosition() const -> sf::Vector2f {
     return sprite.getPosition();
 }
 
 ////////////////////////////////////////////////////////////////////////////////
-void Unit::SetPosition(sf::Vector2f newPos)
-{
+void Unit::SetPosition(sf::Vector2f newPos) {
     sprite.setPosition(newPos);
     turretSprite.setPosition(newPos + turretOffset);
 }
 
 ////////////////////////////////////////////////////////////////////////////////
 auto Unit::GetSize() const -> sf::Vector2f {
-    auto width = static_cast<float>(texture.getSize().x);
-    auto height = static_cast<float>(texture.getSize().y);
+    auto width = static_cast<float>(sprite.getLocalBounds().width);
+    auto height = static_cast<float>(sprite.getLocalBounds().height);
 
     return sf::Vector2f(width, height) * scale;
 }

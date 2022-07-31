@@ -1,6 +1,4 @@
 #include "Level.h"
-
-#include <cstddef>
 #include "LevelGen.h"
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -20,6 +18,9 @@ Level::Level(unsigned long w, unsigned long h) : width(w), height(h), vertices(s
     const auto heights = GenerateWave(static_cast<int>(width));
     pixels = PixelsFromHeights(heights, static_cast<int>(height));
     texture.update(pixels.data());
+
+    spawns.emplace_back(sf::Vector2f(430.F, 0.F));
+    spawns.emplace_back(sf::Vector2f(1725.F, 0.F));
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -44,6 +45,11 @@ sf::Color Level::GetPixel(sf::Vector2f pos) const {
     color.a = pixels[index+3];
 
     return color;
+}
+
+////////////////////////////////////////////////////////////////////////////////
+sf::Vector2f Level::GetSpawn(std::vector<sf::Vector2f>::size_type index) const {
+    return spawns.at(index);
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -72,4 +78,3 @@ void Level::draw(sf::RenderTarget &target, sf::RenderStates states) const {
     states.texture = &texture;
     target.draw(vertices, states);
 }
-
