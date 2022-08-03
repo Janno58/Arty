@@ -14,7 +14,7 @@ bool Collides(const Level& level, const Unit& unit)
     const auto colPix = sf::Vector2f(unitPos.x + unitSize.x / 2, unitPos.y + unitSize.y);
     const auto pix = level.GetPixel(colPix);
 
-    return pix != sf::Color::White;
+    return pix != sf::Color(0,0,0,0);
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -23,7 +23,7 @@ bool Collides(const Level& level, const Projectile& shell)
     const auto tip = shell.GetTheTip();
     const auto pix = level.GetPixel(tip);
 
-    return pix != sf::Color::White;
+    return pix != sf::Color(0,0,0,0);
 }
 
 ////////////////////////////////////////////////////////////////////////////////

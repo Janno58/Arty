@@ -24,10 +24,10 @@ std::vector<sf::Uint8> PixelsFromHeights(const std::vector<int>& heights, int le
                 pixels.push_back(0);
                 pixels.push_back(255);
             } else {
-                pixels.push_back(255);
-                pixels.push_back(255);
-                pixels.push_back(255);
-                pixels.push_back(255);
+                pixels.push_back(0);
+                pixels.push_back(0);
+                pixels.push_back(0);
+                pixels.push_back(0);
             }
         }
     }

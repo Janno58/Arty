@@ -11,7 +11,7 @@ std::vector<Pixel> CreateCircle(int centerX, int centerY, int radius) {
     for( int yPos = -radius; yPos <= radius; yPos++) {
         for( int xPos = -radius; xPos <= radius; xPos++) {
             if( xPos * xPos + yPos * yPos <= radius * radius) {
-                pixels.emplace_back(centerX + xPos, centerY + yPos, sf::Color::White);
+                pixels.emplace_back(centerX + xPos, centerY + yPos, sf::Color(0,0,0,0));
             }
         }
     }

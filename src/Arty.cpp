@@ -66,13 +66,6 @@ int main() {
                 scroll.SetScreenSize(event.size.width, event.size.height);
             }
 
-            else if( event.type == sf::Event::MouseMoved ) {
-                const auto gMousePos = sf::Mouse::getPosition(window);
-                const auto mousePos  = window.mapPixelToCoords(gMousePos);
-
-                players[activePlayer].MouseMove(mousePos);
-            }
-
             else if( event.type == sf::Event::MouseButtonReleased &&
                     event.mouseButton.button == sf::Mouse::Left) {
                 const auto posBase= players[activePlayer].GetRotationPoint();
@@ -81,8 +74,18 @@ int main() {
 
                 shells.emplace_back(posTip, vel);
                 activePlayer++;
+
+                if(activePlayer >= players.size()) {
+                    activePlayer = 0U;
+                }
+
             }
         }
+
+        const auto gMousePos = sf::Mouse::getPosition(window);
+        const auto mousePos  = window.mapPixelToCoords(gMousePos);
+
+        players[activePlayer].MouseMove(mousePos);
 
         //
         // Physics
@@ -123,14 +126,10 @@ int main() {
         //
         shells.erase( std::remove_if(shells.begin(), shells.end(), [](const auto& shell){ return shell.HasExploded(); }), shells.end() );
 
-        if(activePlayer >= players.size()) {
-            activePlayer = 0U;
-        }
-
         //
         // Draw
         //
-        window.clear(sf::Color::White);
+        window.clear(sf::Color(207,239,252,255));
         window.setView(scroll.GetView());
         window.draw(level);
 

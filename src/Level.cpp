@@ -2,7 +2,8 @@
 #include "LevelGen.h"
 
 ////////////////////////////////////////////////////////////////////////////////
-Level::Level(unsigned long w, unsigned long h) : width(w), height(h), vertices(sf::Quads, 4) {
+Level::Level(unsigned int w, unsigned int h)
+: width(w), height(h), vertices(sf::Quads, 4), background(w, h) {
     texture.create(width, height);
 
     vertices[0] = sf::Vector2f(0.F, 0.F);
@@ -75,6 +76,7 @@ void Level::SetPixels(const std::vector<Pixel>& newPixels)
 
 ////////////////////////////////////////////////////////////////////////////////
 void Level::draw(sf::RenderTarget &target, sf::RenderStates states) const {
+    target.draw(background, states);
     states.texture = &texture;
     target.draw(vertices, states);
 }
