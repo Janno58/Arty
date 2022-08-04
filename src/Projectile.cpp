@@ -74,3 +74,17 @@ void Projectile::draw(sf::RenderTarget &target, sf::RenderStates states) const {
 
     target.draw(sprite, states);
 }
+
+////////////////////////////////////////////////////////////////////////////////
+ShellOutsideLevel::ShellOutsideLevel(unsigned int width, unsigned int height)
+: Width(static_cast<float>(width)), Height(static_cast<float>(height)) {
+
+}
+
+////////////////////////////////////////////////////////////////////////////////
+bool ShellOutsideLevel::operator()(const Projectile &shell) const {
+    const auto pos = shell.GetTheTip();
+    return pos.x > Width || pos.x < 0 || pos.y < Height;
+
+}
+

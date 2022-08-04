@@ -2,7 +2,7 @@
 
 ////////////////////////////////////////////////////////////////////////////////
 Background::Background(unsigned int width, unsigned int height)
-: vertices(sf::Quads, 4) {
+: Color(207,239,252,255), vertices(sf::Quads, 4) {
 
     if(!texture.loadFromFile("backgroundForest.png")) {
         throw std::runtime_error("Error loading texture!");

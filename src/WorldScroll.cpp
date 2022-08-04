@@ -2,12 +2,7 @@
 
 ////////////////////////////////////////////////////////////////////////////////
 WorldScroll::WorldScroll(sf::Vector2u wSize, sf::Vector2u sSize)
-    : worldSize(wSize), screenSize(sSize) {
-    const auto halfWidth = screenSize.x / 2U;
-    const auto halfHeight = screenSize.y / 2U;
-
-    offset = sf::Vector2u(halfWidth, halfHeight);
-
+    : offset(sSize / 2U), worldSize(wSize), screenSize(sSize) {
     view.setCenter(static_cast<float>(offset.x), static_cast<float>(offset.y));
     view.setSize(static_cast<float>(screenSize.x), static_cast<float>(screenSize.y));
 }

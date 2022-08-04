@@ -12,6 +12,8 @@
 ////////////////////////////////////////////////////////////////////////////////
 constexpr unsigned int DEFAULT_WINDOW_WIDTH = 1024U;
 constexpr unsigned int DEFAULT_WINDOW_HEIGHT = 768U;
+constexpr unsigned int LEVEL_WIDTH = 4000;
+constexpr unsigned int LEVEL_HEIGHT = 1000;
 
 ////////////////////////////////////////////////////////////////////////////////
 int main() {
@@ -26,7 +28,7 @@ int main() {
     TextureCache texCache;
     Projectile::SetTexCache(&texCache);
 
-    auto level = Level(4000, 1000);
+    auto level = Level(LEVEL_WIDTH, LEVEL_HEIGHT);
     auto scroll = WorldScroll(level.GetSize(), {DEFAULT_WINDOW_WIDTH, DEFAULT_WINDOW_HEIGHT});
     window.setView(scroll.GetView());
 
@@ -125,11 +127,12 @@ int main() {
         // Misc housekeeping
         //
         shells.erase( std::remove_if(shells.begin(), shells.end(), [](const auto& shell){ return shell.HasExploded(); }), shells.end() );
+        shells.erase( std::remove_if(shells.begin(), shells.end(), ShellOutsideLevel(LEVEL_WIDTH, LEVEL_HEIGHT)));
 
         //
         // Draw
         //
-        window.clear(sf::Color(207,239,252,255));
+        window.clear(level.GetBackgroundColor());
         window.setView(scroll.GetView());
         window.draw(level);
 
