@@ -126,8 +126,8 @@ int main() {
         //
         // Misc housekeeping
         //
-        shells.erase( std::remove_if(shells.begin(), shells.end(), [](const auto& shell){ return shell.HasExploded(); }), shells.end() );
-        shells.erase( std::remove_if(shells.begin(), shells.end(), ShellOutsideLevel(LEVEL_WIDTH, LEVEL_HEIGHT)));
+        std::erase_if(shells, [](const auto& shell){ return shell.HasExploded(); });
+        std::erase_if(shells, ShellOutsideLevel(LEVEL_WIDTH, LEVEL_HEIGHT));
 
         //
         // Draw
