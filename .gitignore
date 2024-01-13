@@ -1,2 +1,5 @@
 # CLion
 .idea/*
+# Clang
+.cache/*
+compile_commands.json

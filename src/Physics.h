@@ -17,4 +17,7 @@ bool Collides(const Level& level, const Projectile& shell);
 ////////////////////////////////////////////////////////////////////////////////
 bool Collides(const Unit& tank, const Projectile& shell);
 
+////////////////////////////////////////////////////////////////////////////////
+float CalculateExplosionDamage(const float distance, const float explosionStrength);
+
 } /* ns Physics */

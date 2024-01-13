@@ -85,6 +85,4 @@ ShellOutsideLevel::ShellOutsideLevel(unsigned int width, unsigned int height)
 bool ShellOutsideLevel::operator()(const Projectile &shell) const {
     const auto pos = shell.GetTheTip();
     return pos.x > Width || pos.x < 0 || pos.y > Height;
-
 }
-

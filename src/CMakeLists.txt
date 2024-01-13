@@ -9,7 +9,9 @@ add_executable(arty Arty.cpp
         Vector.h
         Projectile.cpp Projectile.h
         TextureCache.cpp TextureCache.h
-        Pixel.h Pixel.cpp Background.cpp Background.h)
+        Pixel.h Pixel.cpp
+        Background.cpp Background.h
+        Healthbar.cpp Healthbar.h)
 
 set_target_properties(arty PROPERTIES
         CXX_STANDARD 23

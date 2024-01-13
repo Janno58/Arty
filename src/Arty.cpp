@@ -17,7 +17,6 @@ constexpr unsigned int LEVEL_HEIGHT = 1000;
 
 ////////////////////////////////////////////////////////////////////////////////
 int main() {
-
     sf::ContextSettings settings;
     settings.antialiasingLevel = 8;
 
@@ -107,6 +106,8 @@ int main() {
             for(auto& shell : shells) {
                 shell.StepPhysics(fixedFrameTime.asSeconds());
 
+                // TODO: Physics should probably try collisions
+
                 if(Physics::Collides(level, shell)) {
                     auto pixels = shell.Explode();
                     level.SetPixels(pixels);
@@ -118,6 +119,21 @@ int main() {
                         level.SetPixels(pixels);
                     }
                 }
+
+                // TODO: Damage calculation code is max iffy
+                if(shell.HasExploded()) {
+                    for(auto& player : players) {
+                        const auto shellPos = shell.GetTheTip();
+                        const auto tankPos = player.GetCenter();
+                        const auto distance = Length(shellPos - tankPos);
+                        const auto damage = Physics::CalculateExplosionDamage(distance, 1000);
+
+                        if(damage >= 1) {
+                            player.Damage(damage);
+                        }
+                    }
+                }
+
             }
 
             frameTimeAccumulator -= fixedFrameTime;
