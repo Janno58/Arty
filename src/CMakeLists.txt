@@ -11,7 +11,10 @@ add_executable(arty Arty.cpp
         TextureCache.cpp TextureCache.h
         Pixel.h Pixel.cpp
         Background.cpp Background.h
-        Healthbar.cpp Healthbar.h)
+        Healthbar.cpp Healthbar.h
+        Players.cpp Players.h
+        StateMachine.cpp StateMachine.h
+        Game.cpp Game.h)
 
 set_target_properties(arty PROPERTIES
         CXX_STANDARD 23

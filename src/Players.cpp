@@ -1,0 +1,31 @@
+////////////////////////////////////////////////////////////////////////////////
+#include "Players.h"
+#include "Unit.h"
+#include <cassert>
+
+////////////////////////////////////////////////////////////////////////////////
+Unit& Players::GetActive() {
+    assert(activeIndex < players.size());
+
+    return players[activeIndex];
+}
+
+////////////////////////////////////////////////////////////////////////////////
+bool Players::PlayerChanged() {
+    if(activePlayerChanged) {
+        activePlayerChanged = false;
+        return true;
+    }
+
+    return false;
+}
+
+////////////////////////////////////////////////////////////////////////////////
+void Players::Next() {
+    activePlayerChanged = true;
+    activeIndex++;
+
+    if(activeIndex >= players.size()) {
+        activeIndex = 0UL;
+    }
+}

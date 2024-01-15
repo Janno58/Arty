@@ -21,17 +21,6 @@ Unit::Unit(const sf::Texture& tex, const sf::Texture& turretTex, sf::Vector2f sp
 }
 
 ////////////////////////////////////////////////////////////////////////////////
-void Unit::Damage(float damage) {
-    health -= damage;
-    health = std::clamp(health, 0.F, maxHealth);
-    healthBar.SetHealthPercentage(health);
-
-    if(health == 0.F) {
-        destroyed = true;
-    }
-}
-
-////////////////////////////////////////////////////////////////////////////////
 void Unit::MouseMove(sf::Vector2f mousePos) {
     auto unitVec = sprite.getPosition() + spriteCenterOffset - mousePos;
 
@@ -63,7 +52,11 @@ sf::Color Unit::GetPixelGlobal(sf::Vector2f position) const {
     const auto& transform = sprite.getInverseTransform();
     const auto pos = transform.transformPoint(position);
 
-    return pixels.getPixel(static_cast<unsigned int>(pos.x), static_cast<unsigned int>(pos.y));
+    if(sprite.getGlobalBounds().contains(position)) {
+        return pixels.getPixel(static_cast<unsigned int>(pos.x), static_cast<unsigned int>(pos.y));
+    }
+
+    return {0,0,0,0};
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -114,5 +107,5 @@ void Unit::draw(sf::RenderTarget &target, sf::RenderStates states) const {
     auto healthBarPos = sprite.getTransform();
     healthBarPos.translate(30.F, -100.F);
     states.transform = healthBarPos;
-    target.draw(healthBar, states);
+    target.draw(GetHealthbar(), states);
 }

@@ -2,7 +2,6 @@
 #include "Projectile.h"
 #include "Level.h"
 #include "Unit.h"
-#include <cmath>
 
 ////////////////////////////////////////////////////////////////////////////////
 namespace Physics {
@@ -40,11 +39,6 @@ bool Collides(const Unit& tank, const Projectile& shell) {
     auto hit = pix != sf::Color(0,0,0,0);
 
     return hit;
-}
-
-////////////////////////////////////////////////////////////////////////////////
-float CalculateExplosionDamage(const float distance, const float explosionStrength) {
-    return (1 / distance) * explosionStrength;
 }
 
 } /* ns Physics */

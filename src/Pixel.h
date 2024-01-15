@@ -6,9 +6,6 @@
 #include <SFML/System/Vector2.hpp>
 
 ////////////////////////////////////////////////////////////////////////////////
-class Unit;
-
-////////////////////////////////////////////////////////////////////////////////
 struct Pixel {
 
     ////////////////////////////////////////////////////////////////////////////
@@ -39,9 +36,9 @@ int CountOverlap(const std::vector<Pixel>& toCheck, const T& checkAgainst) {
 
         // Have to check bounds
         // TODO: Write Unit.GetPixels();
-        const auto cApixel = checkAgainst.GetPixelGlobal(pixel);
+        const auto pixelCA = checkAgainst.GetPixelGlobal(pixel);
 
-        if(cApixel != sf::Color(0, 0, 0, 0)) {
+        if(pixelCA != sf::Color(0, 0, 0, 0)) {
             result++;
         }
     }

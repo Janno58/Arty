@@ -1,10 +1,14 @@
 #include "Level.h"
 #include "LevelGen.h"
+#include <cassert>
 
 ////////////////////////////////////////////////////////////////////////////////
-Level::Level(unsigned int w, unsigned int h)
+Level::Level(float w, float h)
 : width(w), height(h), vertices(sf::Quads, 4), background(w, h) {
-    texture.create(width, height);
+    
+    assert(w > 0.F && h > 0.F);
+
+    texture.create(static_cast<unsigned int>(w), static_cast<unsigned int>(h));
 
     vertices[0] = sf::Vector2f(0.F, 0.F);
     vertices[1] = sf::Vector2f(width, 0.F);
@@ -30,7 +34,7 @@ sf::Color Level::GetBackgroundColor() const {
 }
 
 ////////////////////////////////////////////////////////////////////////////////
-sf::Vector2u Level::GetSize() const {
+sf::Vector2f Level::GetSize() const {
     return {width, height};
 }
 
@@ -41,7 +45,7 @@ sf::Color Level::GetPixel(sf::Vector2f pos) const {
     auto index = (xPos + yPos * static_cast<unsigned long>(width)) * 4;
 
     if(index > static_cast<unsigned long>(width * height) * 4) {
-        return sf::Color::White;
+        return sf::Color(0,0,0,0);
     }
 
     sf::Color color;
@@ -62,6 +66,9 @@ sf::Vector2f Level::GetSpawn(std::vector<sf::Vector2f>::size_type index) const {
 void Level::SetPixels(const std::vector<Pixel>& newPixels)
 {
     for(const auto& pixel : newPixels) {
+        assert(pixel.x >= 0);
+        assert(pixel.y >= 0);
+
         auto xPos = pixel.x;
         auto yPos = pixel.y;
         auto index = (xPos + yPos * width) * 4;
