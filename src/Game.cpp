@@ -29,11 +29,10 @@ void SinglePlayer::ExecuteFrame() {
 
         else if( event.type == sf::Event::MouseButtonReleased &&
                  event.mouseButton.button == sf::Mouse::Left) {
-            const auto posBase= players.GetActive().GetRotationPoint();
-            const auto posTip = players.GetActive().GetMuzzlePos();
-            const auto vel = Normalize(posTip - posBase) * SHELL_VELOCITY;
+            auto [pos, vel] = players.GetActive()->GetShellPos();
+            vel *= SHELL_VELOCITY;
 
-            shells.emplace_back(posTip, vel);
+            shells.emplace_back(pos, vel);
             players.Next();
         }
     }
@@ -41,10 +40,10 @@ void SinglePlayer::ExecuteFrame() {
     const auto gMousePos = sf::Mouse::getPosition(window);
     const auto mousePos  = window.mapPixelToCoords(gMousePos);
 
-    players.GetActive().MouseMove(mousePos);
+    players.GetActive()->MouseMove(mousePos);
 
     if(shells.empty() && players.PlayerChanged()) {
-        scroll.Focus(players.GetActive().GetCenter());
+        scroll.Focus(players.GetActive()->GetDrawable().GetCenter());
     } else if(!shells.empty()) {
         scroll.Focus(shells.back().GetTheTip());
     }
@@ -64,7 +63,7 @@ void SinglePlayer::ExecuteFrame() {
     window.draw(level);
 
     for(const auto& player : players) {
-        window.draw(player); 
+        window.draw(player->GetDrawable()); 
     }
 
     for(const auto& shell : shells) {
@@ -85,10 +84,10 @@ void SinglePlayer::ExecuteFrame() {
 void SinglePlayer::doPhysics(const sf::Time& deltaTime) {
 
     for(auto& tank : players) {
-        tank.StepPhysics(deltaTime.asSeconds());
+        tank->GetDrawable().StepPhysics(deltaTime.asSeconds());
 
-        if(Physics::Collides(level, tank)) {
-            tank.SetVelocity(-GRAVITY);
+        if(Physics::Collides(level, tank->GetDrawable())) {
+            tank->GetDrawable().SetVelocity(-GRAVITY);
         }
     }
 
@@ -103,7 +102,7 @@ void SinglePlayer::doPhysics(const sf::Time& deltaTime) {
         }
 
         for (auto &tank: players) {
-            if (Physics::Collides(tank, shell)) {
+            if (Physics::Collides(tank->GetDrawable(), shell)) {
                 auto pixels = shell.Explode();
                 level.SetPixels(pixels);
             }
@@ -114,7 +113,7 @@ void SinglePlayer::doPhysics(const sf::Time& deltaTime) {
             const auto pixels = shell.Explode();
             for(auto& player : players) {
                 const auto overlap = CountOverlap(pixels, player);
-                player.Damage(static_cast<float>(overlap / 100));
+                player->GetDrawable().Damage(static_cast<float>(overlap / 100));
             }
         }
     }

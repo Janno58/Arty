@@ -36,7 +36,7 @@ int CountOverlap(const std::vector<Pixel>& toCheck, const T& checkAgainst) {
 
         // Have to check bounds
         // TODO: Write Unit.GetPixels();
-        const auto pixelCA = checkAgainst.GetPixelGlobal(pixel);
+        const auto pixelCA = checkAgainst->GetDrawable().GetPixelGlobal(pixel);
 
         if(pixelCA != sf::Color(0, 0, 0, 0)) {
             result++;

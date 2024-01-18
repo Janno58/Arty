@@ -14,7 +14,8 @@ add_executable(arty Arty.cpp
         Healthbar.cpp Healthbar.h
         Players.cpp Players.h
         StateMachine.cpp StateMachine.h
-        Game.cpp Game.h)
+        Game.cpp Game.h
+        CompPlayer.cpp CompPlayer.h)
 
 set_target_properties(arty PROPERTIES
         CXX_STANDARD 23
