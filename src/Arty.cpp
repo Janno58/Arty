@@ -13,11 +13,12 @@ int main() {
     settings.antialiasingLevel = DEFAULT_ANTI_ALIASING;
 
     sf::RenderWindow window(sf::VideoMode(DEFAULT_WINDOW_WIDTH, DEFAULT_WINDOW_HEIGHT), "Arty", sf::Style::Default, settings);
+
     TextureCache texCache;
     Projectile::SetTexCache(&texCache);
 
     std::stack<std::unique_ptr<GameState>> states;
-    states.push(std::make_unique<SinglePlayer>(window, texCache));
+    states.push(std::make_unique<MainMenu>(window, texCache, states));
 
     while(!states.empty()) {
         states.top()->ExecuteFrame();

@@ -65,6 +65,11 @@ struct HealthComponent {
         return healthBar;
     }
 
+    ////////////////////////////////////////////////////////////////////////////
+    healthType GetHealthAbs() const {
+        return health;
+    }
+
 private:
 
     /// Current health value

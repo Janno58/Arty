@@ -45,6 +45,13 @@ float Length(T vec) {
 
 ////////////////////////////////////////////////////////////////////////////////
 template <class T>
+float Distance(T vec, T vec2) {
+    return std::sqrt( std::pow(vec2.x - vec.x, 2) + std::pow(vec2.y - vec.y, 2));
+}
+
+
+////////////////////////////////////////////////////////////////////////////////
+template <class T>
 sf::Vector2f Normalize(T vec) {
     auto mag = Length(vec);
 

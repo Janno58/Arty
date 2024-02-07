@@ -1,0 +1,16 @@
+#pragma once
+
+////////////////////////////////////////////////////////////////////////////////
+#include <SFML/Graphics/Vertex.hpp>
+#include <SFML/Graphics/Texture.hpp>
+#include <vector>
+
+////////////////////////////////////////////////////////////////////////////////
+namespace GUI {
+
+/// Creates a window vertices with desired size using a specified texture size
+////////////////////////////////////////////////////////////////////////////////
+std::vector<sf::Vertex> CreateWindowVertices(sf::Vector2f WindowSize,
+                                             sf::Vector2u TextureSize);
+
+} /* ns GUI */

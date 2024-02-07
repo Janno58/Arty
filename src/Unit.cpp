@@ -28,7 +28,6 @@ void Unit::MouseMove(sf::Vector2f mousePos) {
     turretSprite.setRotation(angle + 180.F);
 }
 
-
 ////////////////////////////////////////////////////////////////////////////////
 void Unit::StepPhysics(float dt) {
     velocity += (GRAVITY / inverseMass) * dt;
@@ -84,6 +83,11 @@ auto Unit::GetMuzzlePos() const -> sf::Vector2f {
     auto yPos = 0.F;
 
     return turretSprite.getTransform().transformPoint(xPos, yPos);
+}
+
+////////////////////////////////////////////////////////////////////////////////
+void Unit::SetTurretRotation(float degrees) {
+    turretSprite.setRotation(degrees);
 }
 
 ////////////////////////////////////////////////////////////////////////////////

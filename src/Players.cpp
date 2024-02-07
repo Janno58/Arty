@@ -1,13 +1,19 @@
 ////////////////////////////////////////////////////////////////////////////////
 #include "Players.h"
+#include "CompPlayer.h"
 #include "Unit.h"
 #include "Vector.h"
 #include <SFML/System/Vector2.hpp>
+#include <algorithm>
 #include <cassert>
-#include <cmath>
+#include <ranges>
+#include <iostream>
+
 
 ////////////////////////////////////////////////////////////////////////////////
-constexpr float RAD_TO_DEG = 180.F / M_PI;
+bool Player::IsComputer() const {
+    return false;
+}
 
 ////////////////////////////////////////////////////////////////////////////////
 const Unit& Player::GetDrawable() const {
@@ -17,6 +23,18 @@ const Unit& Player::GetDrawable() const {
 ////////////////////////////////////////////////////////////////////////////////
 Unit& Player::GetDrawable() {
     return drawable;
+}
+
+////////////////////////////////////////////////////////////////////////////////
+PlayerInfo Player::GetPlayerInfo() const {
+    PlayerInfo info;
+    
+    info.index = index;
+    info.health = GetDrawable().GetHealthAbs();
+    info.position = GetDrawable().GetPosition();
+    info.AI = IsComputer();
+
+    return info;
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -35,28 +53,51 @@ void HumanPlayer::MouseMove(const sf::Vector2f& pos) {
 }
 
 ////////////////////////////////////////////////////////////////////////////////
+std::optional<Player*> Players::GetLoneSurvivor() {
+    Player* res = nullptr;
+
+    for(auto& player : players) {
+        if(res == nullptr && !player->dead) {
+            res = player.get();
+        } else if(res != nullptr && !player->dead) {
+            return {};
+        }
+    }
+
+    return res;
+}
+
+////////////////////////////////////////////////////////////////////////////////
 Player* Players::GetActive() {
     assert(activeIndex < players.size());
+
+    if(players[activeIndex]->dead) {
+        Next();
+    }
 
     return players[activeIndex].get();
 }
 
 ////////////////////////////////////////////////////////////////////////////////
-bool Players::PlayerChanged() {
-    if(activePlayerChanged) {
-        activePlayerChanged = false;
-        return true;
-    }
+void Players::Next() {
+    activeIndex++;
 
-    return false;
+    while(activeIndex >= players.size() || players[activeIndex]->dead) {
+        activeIndex++;
+
+        if(activeIndex >= players.size()) {
+            activeIndex = 0UL;
+        }
+    }
 }
 
 ////////////////////////////////////////////////////////////////////////////////
-void Players::Next() {
-    activePlayerChanged = true;
-    activeIndex++;
+std::vector<PlayerInfo> Players::EnumeratePlayersData() const {
+    std::vector<PlayerInfo> info;
+    
+    std::for_each(players.begin(), players.end(), [&info](auto &player){
+        info.emplace_back(player->GetPlayerInfo());
+    });
 
-    if(activeIndex >= players.size()) {
-        activeIndex = 0UL;
-    }
+    return info;
 }

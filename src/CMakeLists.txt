@@ -1,5 +1,4 @@
 add_executable(arty Arty.cpp
-        LevelGen.cpp LevelGen.h
         Level.cpp Level.h
         WorldScroll.cpp WorldScroll.h
         Unit.cpp Unit.h
@@ -15,7 +14,14 @@ add_executable(arty Arty.cpp
         Players.cpp Players.h
         StateMachine.cpp StateMachine.h
         Game.cpp Game.h
-        CompPlayer.cpp CompPlayer.h)
+        CompPlayer.cpp CompPlayer.h
+        TextKeeper.cpp TextKeeper.h
+        gui/GuiFunctions.cpp gui/GuiFunctions.h
+        gui/Button.cpp gui/Button.h
+        gui/TextEdit.cpp
+        gui/TextEdit.h
+        Player.cpp
+        Player.h)
 
 set_target_properties(arty PROPERTIES
         CXX_STANDARD 23

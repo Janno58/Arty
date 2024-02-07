@@ -1,26 +1,50 @@
 #include "Config.h"
 #include "Game.h"
+#include "Players.h"
 #include "TextureCache.h"
 #include "Input.h"
-#include "Vector.h"
 #include "Physics.h"
+#include <ranges>
+#include <cassert>
 
 ////////////////////////////////////////////////////////////////////////////////
-SinglePlayer::SinglePlayer(sf::RenderWindow& win, TextureCache& cache) : window(win), textureCache(cache), scroll(level.GetSize(), win.getSize()) {
-    players.AddPlayer(cache.GetTexture("tanks_tankGreen_body3.png"),
-                      cache.GetTexture("tanks_turret1.png"),
-                      level.GetSpawn(0U));
+SinglePlayer::SinglePlayer(sf::RenderWindow& win,
+                           TextureCache& cache,
+                           std::stack<std::unique_ptr<GameState>>& stack,
+                           const std::string& levelName,
+                           std::vector<std::string> playerNames)
+: GameState(stack), window(win), level(levelName), scroll(level.GetSize(), win.getSize()) {
 
-    players.AddPlayer(cache.GetTexture("tanks_tankNavy_body3.png"),
-                      cache.GetTexture("tanks_turret1.png"),
-                      level.GetSpawn(1U));
+    sf::Texture& turret = cache.GetTexture("tanks_turret1.png");
 
+    for(auto index = 0U; index < playerNames.size(); index++) {
+        switch(index) {
+            case 0:
+                players.AddPlayer(playerNames[index], cache.GetTexture("tanks_tankGreen_body3.png"), turret, level.GetSpawn(index));
+                break;
+            case 1:
+                players.AddPlayer(playerNames[index], cache.GetTexture("tanks_tankNavy_body3.png"), turret, level.GetSpawn(index));
+                break;
+            default:
+                players.AddPlayer(playerNames[index], cache.GetTexture("tanks_tankGreen_body3.png"), turret, level.GetSpawn(index));
+                break;
+        }
+    }
+
+    scroll.Focus(players.GetActive()->GetDrawable().GetCenter());
 }
+
 ////////////////////////////////////////////////////////////////////////////////
 void SinglePlayer::ExecuteFrame() {
+    if(!window.isOpen()) {
+        Stop();
+    }
+
+    auto [pos, vel] = players.GetActive()->GetShellPos();
+
     while(window.pollEvent(event)) {
         if( event.type == sf::Event::Closed ) {
-            GameState::Stop(); 
+            window.close();
         }
 
         else if( event.type == sf::Event::Resized ) {
@@ -28,26 +52,63 @@ void SinglePlayer::ExecuteFrame() {
         }
 
         else if( event.type == sf::Event::MouseButtonReleased &&
-                 event.mouseButton.button == sf::Mouse::Left) {
-            auto [pos, vel] = players.GetActive()->GetShellPos();
+                 event.mouseButton.button == sf::Mouse::Left &&
+                 shell.HasExploded()) {
             vel *= SHELL_VELOCITY;
-
-            shells.emplace_back(pos, vel);
-            players.Next();
+            shell = Projectile(pos, vel);
         }
     }
- 
+
     const auto gMousePos = sf::Mouse::getPosition(window);
     const auto mousePos  = window.mapPixelToCoords(gMousePos);
 
     players.GetActive()->MouseMove(mousePos);
+    trajectoryDrawer.Update(pos, vel*SHELL_VELOCITY);
 
-    if(shells.empty() && players.PlayerChanged()) {
-        scroll.Focus(players.GetActive()->GetDrawable().GetCenter());
-    } else if(!shells.empty()) {
-        scroll.Focus(shells.back().GetTheTip());
+    for(const auto& player : players) {
+        if(!player->dead && player->GetDrawable().GetHealthAbs() <= 0.0F ) {
+            player->dead = true;
+            std::string deathNotice = player->name + " has died!";
+            text.CreateTimedText(deathNotice, DEATH_NOTICE_SIZE, sf::seconds(3), PresetTxtPos::FirstQuarter, PresetTxtPos::Center);
+        }
     }
 
+    //
+    // Win
+    //
+    auto loneSurvivor = players.GetLoneSurvivor();
+    if(loneSurvivor) {
+        text.Clear();
+        std::string winNotice = loneSurvivor.value()->name + " has WON!!!";
+        text.CreateText(winNotice, WIN_NOTICE_SIZE, PresetTxtPos::FirstQuarter, PresetTxtPos::Center);
+    }
+
+    //
+    // Projectile update
+    //
+    if(!shell.HasExploded() && IsOutsideLevel(LEVEL_WIDTH, LEVEL_HEIGHT, shell)) {
+        shellExplode();
+    }
+
+    if(!shell.HasExploded()) {
+        scroll.Focus(shell.GetTheTip());
+    }
+
+    //
+    // AI
+    //
+    if(players.GetActive()->IsComputer()) {
+        auto* comp = dynamic_cast<AI::CompPlayer*>(players.GetActive());
+
+        if(comp->Act()) {
+            vel *= SHELL_VELOCITY;
+            shell = Projectile(pos, vel);
+        }
+    }
+
+    //
+    // Physics
+    //
     frameTimeAccumulator += frameClock.restart();
     while( frameTimeAccumulator >= fixedFrameTime ) {
         scroll.Scroll(Input::GetMapScroll(), fixedFrameTime);
@@ -56,28 +117,32 @@ void SinglePlayer::ExecuteFrame() {
     }
 
     //
+    // Text
+    //
+    text.Update();
+
+    //
     // Draw
     //
     window.clear(level.GetBackgroundColor());
     window.setView(scroll.GetView());
     window.draw(level);
 
+    if(shell.HasExploded()) {
+        window.draw(trajectoryDrawer);
+    }
+
     for(const auto& player : players) {
         window.draw(player->GetDrawable()); 
     }
 
-    for(const auto& shell : shells) {
-        window.draw(shell);
-    }
+    window.draw(shell);
 
+    window.setView(text.View());
+    window.draw(text);
 
+    window.setView(scroll.GetView());
     window.display();
-
-    //
-    // Misc housekeeping
-    //
-    std::erase_if(shells, [](const auto& shell){ return shell.HasExploded(); });
-    std::erase_if(shells, ShellOutsideLevel(LEVEL_WIDTH, LEVEL_HEIGHT));
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -91,30 +156,330 @@ void SinglePlayer::doPhysics(const sf::Time& deltaTime) {
         }
     }
 
-    for (auto &shell: shells) {
-        shell.StepPhysics(fixedFrameTime.asSeconds());
+    shell.StepPhysics(fixedFrameTime.asSeconds());
 
-        // TODO: Physics should probably try collisions
-        // FIXME: Shell get exploded when check for collision but out of bounds;
-        if (Physics::Collides(level, shell)) {
-            auto pixels = shell.Explode();
-            level.SetPixels(pixels);
+    // TODO: Physics should probably try collisions
+    // FIXME: Shell get exploded when check for collision but out of bounds;
+    if (Physics::Collides(level, shell)) {
+        shellExplode();
+    }
+
+    for (auto &tank: players) {
+        if (Physics::Collides(tank->GetDrawable(), shell)) {
+            shellExplode();
+        }
+    }
+}
+
+////////////////////////////////////////////////////////////////////////////////
+void SinglePlayer::shellExplode() {
+    if(shell.HasExploded()) {
+        return;
+    }
+
+    const auto pixels = shell.Explode();
+    level.SetPixels(pixels);
+
+    for(auto &player: players) {
+        const auto overlap = CountOverlap(pixels, player);
+        player->GetDrawable().Damage(static_cast<float>(overlap) / 100.F);
+    }
+
+    playerChange();
+}
+
+////////////////////////////////////////////////////////////////////////////////
+void SinglePlayer::playerChange() {
+    players.Next();
+    auto* player = players.GetActive();
+
+    scroll.Focus(player->GetDrawable().GetCenter());
+    std::string turnNotice = player->name + "'s turn!";
+    text.CreateTimedText(turnNotice, TURN_NOTICE_SIZE, sf::seconds(2), PresetTxtPos::FirstFourth, PresetTxtPos::Center);
+
+    if(player->IsComputer()) {
+        auto* comp = dynamic_cast<AI::CompPlayer*>(player);
+        const auto info = players.EnumeratePlayersData();
+
+        comp->UpdateTargeting(info);
+        comp->TurnStart();
+    }
+}
+
+////////////////////////////////////////////////////////////////////////////////
+/// MainMenu class
+////////////////////////////////////////////////////////////////////////////////
+
+////////////////////////////////////////////////////////////////////////////////
+MainMenu::MainMenu(sf::RenderWindow &win,
+                   TextureCache &cache,
+                   std::stack<std::unique_ptr<GameState>>& stack)
+: GameState(stack), window(win), textureCache(cache) {
+    if(!font.loadFromFile("SingleDay-Regular.ttf")) {
+        throw std::runtime_error("MainMenu::MainMenu: Error loading font!");
+    }
+
+    const float buttonWidth = 300.F;
+    const float buttonHeight = 60.F;
+    const float buttonX = viewport.width / 2.F - buttonWidth / 2.F;
+    const float newGameY = 300.F;
+    const float quitY = 500.F;
+
+    GUI::ButtonTextDescriptor desc;
+    desc.text = sf::String("New Game");
+    desc.texture1 = &textureCache.GetTexture("panel_woodPaper.png");
+    desc.texture2 = &textureCache.GetTexture("panel_woodPaperDetail.png");
+    desc.font = &font;
+
+    buttons.emplace_back(std::make_unique<GUI::Button>("new game",
+                                                       sf::Vector2f(buttonX, newGameY),
+                                                       sf::Vector2f(buttonWidth, buttonHeight),
+                                                       desc));
+
+    desc.text = sf::String("QUIT");
+    buttons.emplace_back(std::make_unique<GUI::Button>("quit",
+                                                       sf::Vector2f(buttonX, quitY),
+                                                       sf::Vector2f(buttonWidth, buttonHeight),
+                                                       desc));
+}
+
+////////////////////////////////////////////////////////////////////////////////
+void MainMenu::ExecuteFrame() {
+    if(!window.isOpen()) {
+        Stop();
+    }
+
+    while(window.pollEvent(event)) {
+        if( event.type == sf::Event::Closed ) {
+            GameState::Stop();
         }
 
-        for (auto &tank: players) {
-            if (Physics::Collides(tank->GetDrawable(), shell)) {
-                auto pixels = shell.Explode();
-                level.SetPixels(pixels);
+        for(const auto& button : buttons) {
+            button->DoEvent(event);
+        }
+    }
+
+    const auto gMousePos = sf::Mouse::getPosition(window);
+    const auto mousePos  = window.mapPixelToCoords(gMousePos);
+
+    for(const auto& button : buttons) {
+        button->MouseMove(mousePos);
+
+        if(button->Clicked()) {
+            if(button->ID() == "new game") {
+                GetStack().push(std::make_unique<NewGameMenu>(window, textureCache, GetStack()));
+                return;
             }
-        }
 
-        // TODO: Damage calculation code is max iffy
-        if (shell.HasExploded()) {
-            const auto pixels = shell.Explode();
-            for(auto& player : players) {
-                const auto overlap = CountOverlap(pixels, player);
-                player->GetDrawable().Damage(static_cast<float>(overlap / 100));
+            if(button->ID() == "quit") {
+                Stop();
+                return;
             }
         }
     }
+
+    window.clear(sf::Color::White);
+    window.setView(view);
+
+    for(const auto& button : buttons) {
+        window.draw(*button);
+    }
+
+    window.display();
+}
+
+////////////////////////////////////////////////////////////////////////////////
+/// NewGameMenu class
+////////////////////////////////////////////////////////////////////////////////
+
+////////////////////////////////////////////////////////////////////////////////
+NewGameMenu::NewGameMenu(sf::RenderWindow &win,
+                         TextureCache &cache,
+                         std::stack<std::unique_ptr<GameState>> &stack)
+: GameState(stack), window(win), textureCache(cache)  {
+    levels = EnumerateLevels();
+    if(levels.empty()) {
+        throw std::runtime_error("Game corrupted? No levels found!");
+    }
+
+    if(!font.loadFromFile("SingleDay-Regular.ttf")) {
+        throw std::runtime_error("MainMenu::MainMenu: Error loading font!");
+    }
+
+    const float buttonWidth = 300.F;
+    const float bHalf = buttonWidth / 2.F;
+    const float hLastRow = 800.F;
+
+    GUI::ButtonTextDescriptor desc;
+    desc.text = sf::String(levels[levelIndex]);
+    desc.texture1 = &textureCache.GetTexture("panel_woodPaper.png");
+    desc.texture2 = &textureCache.GetTexture("panel_woodPaperDetail.png");
+    desc.font = &font;
+
+    buttons.emplace_back(std::make_unique<GUI::Button>("level", sf::Vector2f(960.F - bHalf, 350.F), sf::Vector2f(buttonWidth, 60.F), desc));
+
+    desc.text = sf::String("<");
+    buttons.emplace_back(std::make_unique<GUI::Button>("prevLevel", sf::Vector2f(740.F, 350.F), sf::Vector2f(60.F, 60.F), desc));
+
+    desc.text = sf::String(">");
+    buttons.emplace_back(std::make_unique<GUI::Button>("nextLevel", sf::Vector2f(1120.F, 350.F), sf::Vector2f(60.F, 60.F), desc));
+
+    desc.text = sf::String("back");
+    buttons.emplace_back(std::make_unique<GUI::Button>("back", sf::Vector2f(640.F - bHalf, hLastRow), sf::Vector2f(buttonWidth, 60.F), desc));
+
+    desc.text = sf::String("start");
+    buttons.emplace_back(std::make_unique<GUI::Button>("start",
+                                                       sf::Vector2f(1280.F - bHalf, hLastRow),
+                                                       sf::Vector2f(buttonWidth, 60.F),
+                                                       desc));
+
+    /// Players settings
+    createPlayersSettings(levels[levelIndex]);
+}
+
+////////////////////////////////////////////////////////////////////////////////
+void NewGameMenu::ExecuteFrame() {
+    if (!window.isOpen()) {
+        Stop();
+    }
+
+    while (window.pollEvent(event)) {
+        if (event.type == sf::Event::Closed) {
+            GameState::Stop();
+        }
+
+        if (event.type == sf::Event::TextEntered) {
+            for (auto& fields : playerNameEdits) {
+                fields.DoEvent(event);
+            }
+        }
+
+        if (event.type == sf::Event::KeyReleased && event.key.code == sf::Keyboard::Escape) {
+            GetStack().pop();
+            return;
+        }
+
+        if (event.type == sf::Event::MouseButtonReleased && event.mouseButton.button == sf::Mouse::Button::Left) {
+            for (auto& fields : playerNameEdits) {
+                const auto gMousePos = sf::Mouse::getPosition(window);
+                const auto mousePos = window.mapPixelToCoords(gMousePos);
+
+                fields.SetActive( fields.GetRect().contains(mousePos) );
+            }
+        }
+
+        for (const auto &button: buttons) {
+            button->DoEvent(event);
+        }
+    }
+
+    const auto gMousePos = sf::Mouse::getPosition(window);
+    const auto mousePos  = window.mapPixelToCoords(gMousePos);
+
+    for(const auto& button : buttons) {
+        button->MouseMove(mousePos);
+
+        if(button->Clicked()) {
+            if(button->ID() == "start") {
+                GetStack().push(std::make_unique<SinglePlayer>(window, textureCache, GetStack(), levels[levelIndex], getPlayersOptions()));
+                return;
+            }
+
+            if(button->ID() == "back") {
+                GetStack().pop();
+                return;
+            }
+
+            if(button->ID() == "prevLevel") { prevLevel(); }
+            else if(button->ID() == "nextLevel" || button->ID() == "level") { nextLevel(); }
+        }
+
+        if(button->ID() == "level") {
+            button->SetText(levels[levelIndex]);
+        }
+    }
+
+    window.clear(sf::Color::White);
+    window.setView(view);
+
+    for(const auto& button : buttons) {
+        window.draw(*button);
+    }
+
+    for(const auto& label : playerNameLabels) {
+        window.draw(label);
+    }
+
+    for(const auto& textEdit: playerNameEdits) {
+        window.draw(textEdit);
+    }
+
+    window.setView(text.View());
+    window.draw(text);
+
+    window.display();
+}
+
+////////////////////////////////////////////////////////////////////////////////
+void NewGameMenu::prevLevel(){
+    if(levelIndex == 0) {
+        levelIndex = levels.size() - 1;
+        return;
+    }
+
+    levelIndex--;
+}
+
+////////////////////////////////////////////////////////////////////////////////
+void NewGameMenu::nextLevel(){
+    levelIndex++;
+    if(levelIndex >= levels.size()) {
+        levelIndex = 0;
+    }
+}
+
+////////////////////////////////////////////////////////////////////////////////
+void NewGameMenu::createPlayersSettings(const std::string& levelName) {
+    auto spawnsCount = GetMaxPlayers(levelName);
+
+    playerNameLabels.clear();
+    playerNameEdits.clear();
+
+    const sf::Vector2f labelFirstPos = {700.F, 400.F};
+    const sf::Vector2f editFirstPos = {900.F, 400.F};
+    const float y_offset = 75.F;
+    const auto labelTextSize = 50U;
+
+    std::string str = "Player ";
+
+    for(auto index = 0; index < spawnsCount; index++) {
+        sf::Text label;
+        label.setCharacterSize(labelTextSize);
+        label.setPosition(labelFirstPos.x, labelFirstPos.y + (y_offset * index));
+
+        auto cnt = std::to_string(static_cast<int>(index));
+        auto res = str + cnt + ':';
+
+        label.setString(res);
+        label.setFillColor(sf::Color::Black);
+        label.setFont(font);
+
+        playerNameLabels.push_back(label);
+        // @FIXME: Add random names
+        GUI::TextEdit editField("John", sf::Vector2f(editFirstPos.x, editFirstPos.y + (y_offset * index)), font);
+        playerNameEdits.push_back(editField);
+    }
+}
+
+////////////////////////////////////////////////////////////////////////////////
+std::vector<std::string> NewGameMenu::getPlayersOptions() {
+    std::vector<std::string> results;
+
+    for(auto field : playerNameEdits) {
+        results.push_back(field.GetText());
+    }
+
+    assert(results.size() > 1);
+
+    return results;
 }

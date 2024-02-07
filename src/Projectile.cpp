@@ -8,7 +8,15 @@ constexpr float TURRET_SCALE = 0.25F;
 TextureCache* Projectile::texCache = nullptr;
 
 ////////////////////////////////////////////////////////////////////////////////
-Projectile::Projectile(sf::Vector2f pos, sf::Vector2f vel) : velocity(vel) {
+Projectile::Projectile() {
+    if(texCache == nullptr) {
+        throw std::logic_error("Projectile::Projectile:: texCache not set!");
+    }
+}
+
+////////////////////////////////////////////////////////////////////////////////
+Projectile::Projectile(sf::Vector2f pos, sf::Vector2f vel) : velocity(vel),
+exploded(false) {
     if(texCache == nullptr) {
         throw std::logic_error("Projectile::Projectile:: texCache not set!");
     }
@@ -76,13 +84,30 @@ void Projectile::draw(sf::RenderTarget &target, sf::RenderStates states) const {
 }
 
 ////////////////////////////////////////////////////////////////////////////////
-ShellOutsideLevel::ShellOutsideLevel(unsigned int width, unsigned int height)
-: Width(static_cast<float>(width)), Height(static_cast<float>(height)) {
+bool IsOutsideLevel(unsigned int width, unsigned int height, const Projectile& proj) {
+    const auto lvlWidth = static_cast<float>(width);
+    const auto lvlHeight = static_cast<float>(height);
+    const auto pos = proj.GetTheTip();
 
+    return pos.x > lvlWidth || pos.x < 0 || pos.y > lvlHeight;
 }
 
 ////////////////////////////////////////////////////////////////////////////////
-bool ShellOutsideLevel::operator()(const Projectile &shell) const {
-    const auto pos = shell.GetTheTip();
-    return pos.x > Width || pos.x < 0 || pos.y > Height;
+void TrajectoryDrawer::Update(sf::Vector2f pos, sf::Vector2f vel) {
+    const auto inverseMass = 1.F/10.F;
+    const auto delta = 0.25F;
+
+    vertices = sf::VertexArray(sf::Lines, 100);
+
+    for(auto index = 0UL; index < 50; index++) {
+        vertices.append(sf::Vertex(pos, sf::Color::Black));
+        vel += (GRAVITY / inverseMass) * delta;
+        pos += (vel * delta);
+        vertices.append(sf::Vertex(pos, sf::Color::Black));
+    }
+}
+
+////////////////////////////////////////////////////////////////////////////////
+void TrajectoryDrawer::draw(sf::RenderTarget &target, sf::RenderStates states) const {
+    target.draw(vertices, states);
 }

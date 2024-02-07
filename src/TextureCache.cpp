@@ -4,8 +4,10 @@
 
 ////////////////////////////////////////////////////////////////////////////////
 sf::Texture& TextureCache::GetTexture(const std::string& path) {
-    if(textures.contains(path)) {
-        return textures[path];
+    for(auto& pair : cache) {
+        if(pair.first == path) {
+            return pair.second;
+        }
     }
 
     sf::Texture tex;
@@ -15,6 +17,7 @@ sf::Texture& TextureCache::GetTexture(const std::string& path) {
 
     std::cout<< "Loaded: " << path << "\n";
 
-    textures.insert({path, std::move(tex)});
-    return textures[path];
+    cache.emplace_back(path, std::move(tex));
+
+    return GetTexture(path);
 }

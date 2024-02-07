@@ -2,6 +2,7 @@
 #include "Projectile.h"
 #include "Level.h"
 #include "Unit.h"
+#include "Vector.h"
 
 ////////////////////////////////////////////////////////////////////////////////
 namespace Physics {
