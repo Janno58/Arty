@@ -18,13 +18,14 @@ bool CompPlayer::IsComputer() const {
 ////////////////////////////////////////////////////////////////////////////////
 void CompPlayer::UpdateTargeting(std::vector<PlayerInfo> info) {
     const auto pos = GetDrawable().GetPosition();
+    const auto dedThreshold = 0.0001F;
 
     const auto isNotItself = [pos](const auto &player) {
         return player.position != pos;
     };
 
-    const auto isNotDead = [](const auto &player) {
-        return player.health > 0.0001F;
+    const auto isNotDead = [dedThreshold](const auto &player) {
+        return player.health > dedThreshold;
     };
 
     std::ranges::sort(info, [&pos](const auto& lhs, const auto& rhs){

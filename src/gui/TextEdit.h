@@ -16,7 +16,7 @@ class TextEdit : public sf::Drawable {
 public:
 
     ////////////////////////////////////////////////////////////////////////////
-    TextEdit(sf::String str, sf::Vector2f pos, const sf::Font& fnt);
+    TextEdit(const sf::String& str, sf::Vector2f pos, const sf::Font& fnt);
 
     ////////////////////////////////////////////////////////////////////////////
     void DoEvent(const sf::Event& event);

@@ -4,12 +4,13 @@
 #include <iostream>
 #include <filesystem>
 #include <sstream>
+#include <cstring>
 
 ////////////////////////////////////////////////////////////////////////////////
 namespace fs = std::filesystem;
 
 ////////////////////////////////////////////////////////////////////////////////
-std::vector<sf::Vector2f> LoadSpawnPoints(fs::path path);
+std::vector<sf::Vector2f> LoadSpawnPoints(const fs::path& path);
 
 ////////////////////////////////////////////////////////////////////////////////
 Level::Level(const std::string& levelName) : vertices(sf::Quads, 4) {
@@ -40,12 +41,8 @@ Level::Level(const std::string& levelName) : vertices(sf::Quads, 4) {
     texture.create(img.getSize().x, img.getSize().y);
     texture.update(img.getPixelsPtr());
 
-    pixels.reserve(img.getSize().x * img.getSize().y * 4);
-    const auto* ptr = img.getPixelsPtr();
-    
-    for(auto index = 0; index < width*height*4; index++) {
-        pixels[index] = ptr[index];
-    }
+    pixels.reserve(static_cast<unsigned int>(img.getSize().x * img.getSize().y *4));
+    std::memcpy(pixels.data(), img.getPixelsPtr(), static_cast<unsigned int>(img.getSize().x * img.getSize().y *4));
 
     background.Create(width, height);
 }
@@ -67,7 +64,7 @@ sf::Color Level::GetPixel(sf::Vector2f pos) const {
     auto index = (xPos + yPos * static_cast<unsigned long>(width)) * 4;
 
     if(index > static_cast<unsigned long>(width * height) * 4) {
-        return sf::Color(0,0,0,0);
+        return {0,0,0,0};
     }
 
     sf::Color color;
@@ -88,15 +85,11 @@ sf::Vector2f Level::GetSpawn(std::vector<sf::Vector2f>::size_type index) const {
 void Level::SetPixels(const std::vector<Pixel>& newPixels)
 {
     for(const auto& pixel : newPixels) {
-        if(pixel.x < 0 || pixel.y < 0 || pixel.x >= width || pixel.y >= height) { continue; }
+        if(pixel.x < 0 || pixel.y < 0 || pixel.x >= static_cast<int>(width) || pixel.y >= static_cast<int>(height)) { continue; }
 
         auto xPos = pixel.x;
         auto yPos = pixel.y;
-        auto index = (xPos + yPos * width) * 4;
-
-        if(index > width * height * 4) {
-            break;
-        }
+        size_t index = (xPos + yPos * static_cast<size_t>(width)) * 4;
 
         pixels[index++] = pixel.color.r;
         pixels[index++] = pixel.color.g;
@@ -144,7 +137,7 @@ std::vector<std::string> EnumerateLevels() {
             }
         }
     }
-    levels.push_back("test level");
+
     return levels;
 }
 
@@ -158,11 +151,11 @@ int GetMaxPlayers(const std::string& levelName) {
     }
 
     auto vec = LoadSpawnPoints(spawnsFile);
-    return vec.size();
+    return static_cast<int>(vec.size());
 }
 
 ////////////////////////////////////////////////////////////////////////////////
-std::vector<sf::Vector2f> LoadSpawnPoints(fs::path path) {
+std::vector<sf::Vector2f> LoadSpawnPoints(const fs::path& path) {
     if(!fs::exists(path) && !fs::is_regular_file(path)) {
         throw std::runtime_error("spawns file does not exist!");
     }

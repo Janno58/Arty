@@ -4,7 +4,7 @@
 namespace GUI {
 
 ////////////////////////////////////////////////////////////////////////////////
-TextEdit::TextEdit(sf::String str, sf::Vector2f pos, const sf::Font& font) {
+TextEdit::TextEdit(const sf::String& str, sf::Vector2f pos, const sf::Font& font) {
     text.setString(str);
     text.setPosition(pos);
     text.setFont(font);
@@ -18,10 +18,12 @@ TextEdit::TextEdit(sf::String str, sf::Vector2f pos, const sf::Font& font) {
 
 ////////////////////////////////////////////////////////////////////////////////
 void TextEdit::DoEvent(const sf::Event& event) {
+    constexpr char backspace = 0x08;
+
     if (active && event.type == sf::Event::TextEntered) {
         auto str = text.getString();
 
-        if (event.text.unicode == 0x08) {
+        if (event.text.unicode == backspace) {
             if (str.getSize() != 0) {
                 str.erase(str.getSize() - 1);
             }

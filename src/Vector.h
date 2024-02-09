@@ -10,7 +10,7 @@ struct Vec2f {
     constexpr Vec2f() : X(0.F), Y(0.F) { }
 
     ////////////////////////////////////////////////////////////////////////////
-    constexpr Vec2f(float x, float y) : X(x), Y(y) { }
+    constexpr Vec2f(float xPos, float yPos) : X(xPos), Y(yPos) { }
 
     ////////////////////////////////////////////////////////////////////////////
     constexpr Vec2f(const sf::Vector2f& vec) : X(vec.x), Y(vec.y) { }

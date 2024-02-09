@@ -11,12 +11,12 @@ Healthbar::Healthbar() {
 }
 
 ////////////////////////////////////////////////////////////////////////////////
-void Healthbar::SetHealthPercentage(float hp) {
-    if(hp < 0 || hp > 100) {
+void Healthbar::SetHealthPercentage(float healthPercentage) {
+    if(healthPercentage < 0.F || healthPercentage > 100.F) {
         throw std::logic_error("Health percentage out of range!");
     }
 
-    const auto newWidth = size.x / 100.F * hp;
+    const auto newWidth = size.x / 100.F * healthPercentage;
     topBar.setSize({newWidth, size.y});
 }
 

@@ -16,7 +16,7 @@ public:
     Healthbar();
 
     ////////////////////////////////////////////////////////////////////////////
-    void SetHealthPercentage(float hp);
+    void SetHealthPercentage(float healthPercentage);
 
 private:
 

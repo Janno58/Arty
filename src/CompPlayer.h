@@ -22,7 +22,7 @@ struct RotateTurretAction {
 
 ////////////////////////////////////////////////////////////////////////////////
 struct ShootAction {
-    
+
 };
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -35,10 +35,10 @@ public:
 
     ////////////////////////////////////////////////////////////////////////////
     template<typename... Args>
-    CompPlayer(size_t indx, Args&& ...args) : Player(indx, std::forward<Args>(args) ...) { }
+    CompPlayer(size_t _index, Args &&...args) : Player(_index, std::forward<Args>(args) ...) {}
 
     ////////////////////////////////////////////////////////////////////////////
-    void MouseMove(const sf::Vector2f& pos) final;
+    void MouseMove(const sf::Vector2f &pos) final;
 
     ////////////////////////////////////////////////////////////////////////////
     bool IsComputer() const final;
@@ -61,4 +61,4 @@ private:
     std::deque<AI::Action> actionList;
 
 };
-};
+}

@@ -6,9 +6,6 @@
 #include <SFML/System/Vector2.hpp>
 #include <algorithm>
 #include <cassert>
-#include <ranges>
-#include <iostream>
-
 
 ////////////////////////////////////////////////////////////////////////////////
 bool Player::IsComputer() const {

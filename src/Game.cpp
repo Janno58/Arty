@@ -306,9 +306,15 @@ NewGameMenu::NewGameMenu(sf::RenderWindow &win,
         throw std::runtime_error("MainMenu::MainMenu: Error loading font!");
     }
 
-    const float buttonWidth = 300.F;
-    const float bHalf = buttonWidth / 2.F;
-    const float hLastRow = 800.F;
+    const sf::Vector2f bigButton {300.F, 60.F};
+    const sf::Vector2f smallButton {60.F, 60.F};
+
+    const sf::Vector2f lvlBtnPos {810.F, 350.F};
+    const sf::Vector2f preLvlPos {740.F, 350.F};
+    const sf::Vector2f posLvlPos {1120.F, 350.F};
+
+    const sf::Vector2f backPos {490.F, 800.F};
+    const sf::Vector2f startPos {1130.F, 800.F};
 
     GUI::ButtonTextDescriptor desc;
     desc.text = sf::String(levels[levelIndex]);
@@ -316,22 +322,19 @@ NewGameMenu::NewGameMenu(sf::RenderWindow &win,
     desc.texture2 = &textureCache.GetTexture("panel_woodPaperDetail.png");
     desc.font = &font;
 
-    buttons.emplace_back(std::make_unique<GUI::Button>("level", sf::Vector2f(960.F - bHalf, 350.F), sf::Vector2f(buttonWidth, 60.F), desc));
+    buttons.emplace_back(std::make_unique<GUI::Button>("level", lvlBtnPos, bigButton, desc));
 
     desc.text = sf::String("<");
-    buttons.emplace_back(std::make_unique<GUI::Button>("prevLevel", sf::Vector2f(740.F, 350.F), sf::Vector2f(60.F, 60.F), desc));
+    buttons.emplace_back(std::make_unique<GUI::Button>("prevLevel", preLvlPos, smallButton, desc));
 
     desc.text = sf::String(">");
-    buttons.emplace_back(std::make_unique<GUI::Button>("nextLevel", sf::Vector2f(1120.F, 350.F), sf::Vector2f(60.F, 60.F), desc));
+    buttons.emplace_back(std::make_unique<GUI::Button>("nextLevel", posLvlPos, smallButton, desc));
 
     desc.text = sf::String("back");
-    buttons.emplace_back(std::make_unique<GUI::Button>("back", sf::Vector2f(640.F - bHalf, hLastRow), sf::Vector2f(buttonWidth, 60.F), desc));
+    buttons.emplace_back(std::make_unique<GUI::Button>("back", backPos, bigButton, desc));
 
     desc.text = sf::String("start");
-    buttons.emplace_back(std::make_unique<GUI::Button>("start",
-                                                       sf::Vector2f(1280.F - bHalf, hLastRow),
-                                                       sf::Vector2f(buttonWidth, 60.F),
-                                                       desc));
+    buttons.emplace_back(std::make_unique<GUI::Button>("start", startPos, bigButton, desc));
 
     /// Players settings
     createPlayersSettings(levels[levelIndex]);
@@ -342,6 +345,9 @@ void NewGameMenu::ExecuteFrame() {
     if (!window.isOpen()) {
         Stop();
     }
+
+    const auto gMousePos = sf::Mouse::getPosition(window);
+    const auto mousePos  = window.mapPixelToCoords(gMousePos);
 
     while (window.pollEvent(event)) {
         if (event.type == sf::Event::Closed) {
@@ -361,9 +367,6 @@ void NewGameMenu::ExecuteFrame() {
 
         if (event.type == sf::Event::MouseButtonReleased && event.mouseButton.button == sf::Mouse::Button::Left) {
             for (auto& fields : playerNameEdits) {
-                const auto gMousePos = sf::Mouse::getPosition(window);
-                const auto mousePos = window.mapPixelToCoords(gMousePos);
-
                 fields.SetActive( fields.GetRect().contains(mousePos) );
             }
         }
@@ -372,9 +375,6 @@ void NewGameMenu::ExecuteFrame() {
             button->DoEvent(event);
         }
     }
-
-    const auto gMousePos = sf::Mouse::getPosition(window);
-    const auto mousePos  = window.mapPixelToCoords(gMousePos);
 
     for(const auto& button : buttons) {
         button->MouseMove(mousePos);
@@ -455,7 +455,7 @@ void NewGameMenu::createPlayersSettings(const std::string& levelName) {
     for(auto index = 0; index < spawnsCount; index++) {
         sf::Text label;
         label.setCharacterSize(labelTextSize);
-        label.setPosition(labelFirstPos.x, labelFirstPos.y + (y_offset * index));
+        label.setPosition(labelFirstPos.x, labelFirstPos.y + (y_offset * static_cast<float>(index)));
 
         auto cnt = std::to_string(static_cast<int>(index));
         auto res = str + cnt + ':';
@@ -466,7 +466,7 @@ void NewGameMenu::createPlayersSettings(const std::string& levelName) {
 
         playerNameLabels.push_back(label);
         // @FIXME: Add random names
-        GUI::TextEdit editField("John", sf::Vector2f(editFirstPos.x, editFirstPos.y + (y_offset * index)), font);
+        GUI::TextEdit editField("John", sf::Vector2f(editFirstPos.x, editFirstPos.y + (y_offset * static_cast<float>(index))), font);
         playerNameEdits.push_back(editField);
     }
 }

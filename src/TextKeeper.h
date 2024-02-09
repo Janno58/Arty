@@ -1,6 +1,7 @@
 #pragma once
 
 ////////////////////////////////////////////////////////////////////////////////
+#include "gui/Config.h"
 #include <SFML/Graphics.hpp>
 #include <list>
 
@@ -36,16 +37,16 @@ public:
     TextKeeper();
 
     ////////////////////////////////////////////////////////////////////////////
-    void CreateText(sf::String str, int size, sf::Vector2f pos);
+    void CreateText(const sf::String& str, int size, sf::Vector2f pos);
 
     ////////////////////////////////////////////////////////////////////////////
-    void CreateText(sf::String str,
+    void CreateText(const sf::String& str,
                          int size,
                          PresetTxtPos verticalPos,
                          PresetTxtPos horizontalPos);
 
     ////////////////////////////////////////////////////////////////////////////
-    void CreateTimedText(sf::String str,
+    void CreateTimedText(const sf::String& str,
                          int size,
                          sf::Time time,
                          PresetTxtPos verticalPos,
@@ -72,7 +73,7 @@ private:
     sf::Clock clock;
 
     ////////////////////////////////////////////////////////////////////////////
-    sf::FloatRect viewPortSize{0.F, 0.F, 1920.F, 1080.F};
+    sf::FloatRect viewPortSize{0.F, 0.F, GUI::VIEWPORT_WIDTH, GUI::VIEWPORT_HEIGHT};
  
     ////////////////////////////////////////////////////////////////////////////
     sf::View view{viewPortSize};

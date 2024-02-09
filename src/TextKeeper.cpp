@@ -9,7 +9,7 @@ TextKeeper::TextKeeper() {
 }
 
 ////////////////////////////////////////////////////////////////////////////////
-void TextKeeper::CreateText(sf::String str, int size, sf::Vector2f pos) {
+void TextKeeper::CreateText(const sf::String& str, int size, sf::Vector2f pos) {
     sf::Text text;
     text.setFont(font);
     text.setString(str);
@@ -30,10 +30,10 @@ void TextKeeper::CreateText(sf::String str, int size, sf::Vector2f pos) {
 }
 
 ////////////////////////////////////////////////////////////////////////////////
-void TextKeeper::CreateText(sf::String str,
-                                 int size,
-                                 PresetTxtPos verticalPos,
-                                 PresetTxtPos horizontalPos) {
+void TextKeeper::CreateText(const sf::String& str,
+                            int size,
+                            PresetTxtPos verticalPos,
+                            PresetTxtPos horizontalPos) {
     sf::Text text;
     text.setFont(font);
     text.setCharacterSize(size);
@@ -45,13 +45,13 @@ void TextKeeper::CreateText(sf::String str,
 
     switch(verticalPos) {
         case PresetTxtPos::FirstFourth:
-            position.y = (1080.F / 4.F) - (txtBounds.height / 2);
+            position.y = (GUI::POS_Y_FIRST_FOURTH) - (txtBounds.height / 2);
             break;
         case PresetTxtPos::FirstQuarter:
-            position.y = (1080.F / 3.F) - (txtBounds.height / 2);
+            position.y = (GUI::POS_Y_FIRST_QUARTER) - (txtBounds.height / 2);
             break;
         case PresetTxtPos::Center:
-            position.y = (1080.F / 2.F) - (txtBounds.height / 2);
+            position.y = (GUI::POS_Y_CENTER) - (txtBounds.height / 2);
             break;
         default:
             break;
@@ -59,7 +59,7 @@ void TextKeeper::CreateText(sf::String str,
 
     switch(horizontalPos) {
         case PresetTxtPos::Center:
-            position.x = (1920.F / 2.F) - (txtBounds.width / 2.F);
+            position.x = (GUI::POS_X_CENTER) - (txtBounds.width / 2);
             break;
         default:
             break;
@@ -76,7 +76,7 @@ void TextKeeper::CreateText(sf::String str,
 }
 
 ////////////////////////////////////////////////////////////////////////////////
-void TextKeeper::CreateTimedText(sf::String str,
+void TextKeeper::CreateTimedText(const sf::String& str,
                                  int size,
                                  sf::Time time,
                                  PresetTxtPos verticalPos,
@@ -92,13 +92,13 @@ void TextKeeper::CreateTimedText(sf::String str,
 
     switch(verticalPos) {
         case PresetTxtPos::FirstFourth:
-            position.y = (1080.F / 4.F) - (txtBounds.height / 2);
+            position.y = (GUI::POS_Y_FIRST_FOURTH) - (txtBounds.height / 2);
             break;
         case PresetTxtPos::FirstQuarter:
-            position.y = (1080.F / 3.F) - (txtBounds.height / 2);
+            position.y = (GUI::POS_Y_FIRST_QUARTER) - (txtBounds.height / 2);
             break;
         case PresetTxtPos::Center:
-            position.y = (1080.F / 2.F) - (txtBounds.height / 2);
+            position.y = (GUI::POS_Y_CENTER) - (txtBounds.height / 2);
             break;
         default:
             break;
@@ -106,7 +106,7 @@ void TextKeeper::CreateTimedText(sf::String str,
 
     switch(horizontalPos) {
         case PresetTxtPos::Center:
-            position.x = (1920.F / 2.F) - (txtBounds.width / 2.F);
+            position.x = (GUI::POS_X_CENTER) - (txtBounds.width / 2);
             break;
         default:
             break;

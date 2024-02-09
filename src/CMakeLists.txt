@@ -21,7 +21,8 @@ add_executable(arty Arty.cpp
         gui/TextEdit.cpp
         gui/TextEdit.h
         Player.cpp
-        Player.h)
+        Player.h
+        gui/Config.h)
 
 set_target_properties(arty PROPERTIES
         CXX_STANDARD 23

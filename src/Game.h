@@ -19,8 +19,6 @@
 ////////////////////////////////////////////////////////////////////////////////
 constexpr unsigned int LEVEL_WIDTH = 2048;
 constexpr unsigned int LEVEL_HEIGHT = 1024;
-constexpr float GUI_VIEWPORT_WIDTH = 1920.F;
-constexpr float GUI_VIEWPORT_HEIGHT = 1080.F;
 constexpr sf::Int32 FIXED_FRAME_TIME_MILLIS = 10; 
 constexpr float SHELL_VELOCITY = 500.F;
 
@@ -115,7 +113,7 @@ private:
     sf::Font font;
 
     ////////////////////////////////////////////////////////////////////////////
-    sf::FloatRect viewport{0.F, 0.F, GUI_VIEWPORT_WIDTH, GUI_VIEWPORT_HEIGHT};
+    sf::FloatRect viewport{0.F, 0.F, GUI::VIEWPORT_WIDTH, GUI::VIEWPORT_HEIGHT};
 
     ////////////////////////////////////////////////////////////////////////////
     sf::View view{viewport};
@@ -179,7 +177,7 @@ private:
     size_t levelIndex{0};
 
     ////////////////////////////////////////////////////////////////////////////
-    sf::FloatRect viewport{0.F, 0.F, GUI_VIEWPORT_WIDTH, GUI_VIEWPORT_HEIGHT};
+    sf::FloatRect viewport{0.F, 0.F, GUI::VIEWPORT_WIDTH, GUI::VIEWPORT_HEIGHT};
 
     ////////////////////////////////////////////////////////////////////////////
     sf::View view{viewport};
