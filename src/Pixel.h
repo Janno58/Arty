@@ -1,47 +1,46 @@
 #pragma once
 
 ////////////////////////////////////////////////////////////////////////////////
+#include "Vector.h"
+#include <cstdint>
 #include <vector>
-#include <SFML/Graphics/Color.hpp>
-#include <SFML/System/Vector2.hpp>
+
+////////////////////////////////////////////////////////////////////////////////
+struct Color {
+    uint8_t r = 0;
+    uint8_t g = 0;
+    uint8_t b = 0;
+    uint8_t a = 0;
+};
 
 ////////////////////////////////////////////////////////////////////////////////
 struct Pixel {
 
     ////////////////////////////////////////////////////////////////////////////
-    Pixel(int xPos, int yPos, sf::Color col);
-
-    ////////////////////////////////////////////////////////////////////////////
-    operator sf::Vector2f() const {
-        return {static_cast<float>(x), static_cast<float>(y)};
-    };
+    Pixel(int xPos, int yPos, Color col);
 
     ////////////////////////////////////////////////////////////////////////////
     int x = 0;
     int y = 0;
 
     ////////////////////////////////////////////////////////////////////////////
-    sf::Color color = sf::Color(0,0,0,0);
+    Color color;
+
+    ////////////////////////////////////////////////////////////////////////////
+    operator Vec2u() const {
+        return {static_cast<unsigned int>(x), static_cast<unsigned int>(y)};
+    }
 };
+
+////////////////////////////////////////////////////////////////////////////////
+using Pixels = std::vector<Pixel>;
 
 ////////////////////////////////////////////////////////////////////////////////
 std::vector<Pixel> CreateCircle(int centerX, int centerY, int radius);
 
 ////////////////////////////////////////////////////////////////////////////////
-template<typename T>
-int CountOverlap(const std::vector<Pixel>& toCheck, const T& checkAgainst) {
-    int result = 0;
+bool Overlaps(Vec2f pos1, Vec2u size1, const std::vector<std::uint8_t>& pixels1,
+              Vec2f pos2, Vec2u size2, const std::vector<std::uint8_t>& pixels2);
 
-    for(const auto& pixel : toCheck) {
-
-        // Have to check bounds
-        // TODO: Write Unit.GetPixels();
-        const auto pixelCA = checkAgainst->GetDrawable().GetPixelGlobal(pixel);
-
-        if(pixelCA != sf::Color(0, 0, 0, 0)) {
-            result++;
-        }
-    }
-
-    return result;
-}
+////////////////////////////////////////////////////////////////////////////////
+bool Overlaps(Vec2f pos1, Vec2f pos2, Vec2u size2, const std::vector<std::uint8_t>& pixels2);

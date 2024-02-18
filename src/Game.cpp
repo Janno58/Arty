@@ -3,7 +3,6 @@
 #include "Players.h"
 #include "TextureCache.h"
 #include "Input.h"
-#include "Physics.h"
 #include <ranges>
 #include <cassert>
 
@@ -13,25 +12,38 @@ SinglePlayer::SinglePlayer(sf::RenderWindow& win,
                            std::stack<std::unique_ptr<GameState>>& stack,
                            const std::string& levelName,
                            std::vector<std::string> playerNames)
-: GameState(stack), window(win), level(levelName), scroll(level.GetSize(), win.getSize()) {
-
-    sf::Texture& turret = cache.GetTexture("tanks_turret1.png");
+: GameState(stack), activePlayer(playerNames.size()), window(win), level(levelName), scroll(level.GetSize(), win.getSize()) {
 
     for(auto index = 0U; index < playerNames.size(); index++) {
         switch(index) {
             case 0:
-                players.AddPlayer(playerNames[index], cache.GetTexture("tanks_tankGreen_body3.png"), turret, level.GetSpawn(index));
+                players.emplace_back(playerNames[index], level.GetSpawn(index), DEFAULT_STARTING_HEALTH, 100.F, "tank_green.png", "tanks_turret1.png");
                 break;
             case 1:
-                players.AddPlayer(playerNames[index], cache.GetTexture("tanks_tankNavy_body3.png"), turret, level.GetSpawn(index));
+                players.emplace_back(playerNames[index], level.GetSpawn(index), DEFAULT_STARTING_HEALTH, 100.F, "navy_tank.png", "tanks_turret1.png");
                 break;
             default:
-                players.AddPlayer(playerNames[index], cache.GetTexture("tanks_tankGreen_body3.png"), turret, level.GetSpawn(index));
+                players.emplace_back(playerNames[index], level.GetSpawn(index), DEFAULT_STARTING_HEALTH, 100.F, "tank_green.png", "tanks_turret1.png");
                 break;
         }
     }
 
-    scroll.Focus(players.GetActive()->GetDrawable().GetCenter());
+    projectile.texture = "green_rocket.png";
+    drawer.CreateProjectile(projectile);
+    auto[shell_pixels, shell_size] = drawer.GetTexturePixels(projectile.texture);
+    projectile.pixels = shell_pixels;
+    projectile.size = shell_size;
+
+    drawer.CreateTanks(players);
+    for(auto& player : players) {
+        auto [pixels, size] = drawer.GetTexturePixels(player.base_texture);
+        player.physicsID = phys.AddDynamicBody(player.position, {0.F, 0.F}, 1.F/100.F, pixels, size);
+    }
+
+    phys.SetTerrainPixels(level.GetPixels());
+
+    // @FIXME: Does not seem to actually work
+    //scroll.Focus(players.GetActive()->GetDrawable().GetCenter());
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -40,7 +52,7 @@ void SinglePlayer::ExecuteFrame() {
         Stop();
     }
 
-    auto [pos, vel] = players.GetActive()->GetShellPos();
+    auto [pos, vel] = GetShellPosVel(players[activePlayer]);
 
     while(window.pollEvent(event)) {
         if( event.type == sf::Event::Closed ) {
@@ -53,50 +65,45 @@ void SinglePlayer::ExecuteFrame() {
 
         else if( event.type == sf::Event::MouseButtonReleased &&
                  event.mouseButton.button == sf::Mouse::Left &&
-                 shell.HasExploded()) {
-            vel *= SHELL_VELOCITY;
-            shell = Projectile(pos, vel);
+                 projectile.has_exploded) {
+            auto vel2 = vel * SHELL_VELOCITY;
+            projectile.has_collided = false;
+            projectile.has_exploded = false;
+            projectile.position = pos + (vel * 50.F);
+            projectile.velocity = vel2;
+            phys.SetProjectile(&projectile);
         }
     }
 
     const auto gMousePos = sf::Mouse::getPosition(window);
     const auto mousePos  = window.mapPixelToCoords(gMousePos);
 
-    players.GetActive()->MouseMove(mousePos);
-    trajectoryDrawer.Update(pos, vel*SHELL_VELOCITY);
+    players[activePlayer].turret_angle = AngleBetweenVectors(players[activePlayer].position + TURRET_OFFSET, mousePos);
 
-    for(const auto& player : players) {
-        if(!player->dead && player->GetDrawable().GetHealthAbs() <= 0.0F ) {
-            player->dead = true;
-            std::string deathNotice = player->name + " has died!";
-            text.CreateTimedText(deathNotice, DEATH_NOTICE_SIZE, sf::seconds(3), PresetTxtPos::FirstQuarter, PresetTxtPos::Center);
-        }
+    auto died = MarkDead(players);
+    if(died) {
+        std::string deathNotice = died.value()->name + " has died!";
+        text.CreateTimedText(deathNotice, DEATH_NOTICE_SIZE, sf::seconds(3), PresetTxtPos::FirstQuarter, PresetTxtPos::Center);
     }
 
-    //
-    // Win
-    //
-    auto loneSurvivor = players.GetLoneSurvivor();
-    if(loneSurvivor) {
+    auto winner = GetLoneSurvivor(players);
+    if(winner) {
         text.Clear();
-        std::string winNotice = loneSurvivor.value()->name + " has WON!!!";
+        std::string winNotice = winner.value()->name + " has WON!!!";
         text.CreateText(winNotice, WIN_NOTICE_SIZE, PresetTxtPos::FirstQuarter, PresetTxtPos::Center);
     }
 
-    //
-    // Projectile update
-    //
-    if(!shell.HasExploded() && IsOutsideLevel(LEVEL_WIDTH, LEVEL_HEIGHT, shell)) {
-        shellExplode();
+    if(projectile.position.x > level.GetSize().x || projectile.position.x < 0) {
+        projectile.has_collided = true;
     }
 
-    if(!shell.HasExploded()) {
-        scroll.Focus(shell.GetTheTip());
-    }
+    drawer.UpdateTanks(players);
+    drawer.UpdateProjectile(projectile);
 
     //
     // AI
     //
+    /*
     if(players.GetActive()->IsComputer()) {
         auto* comp = dynamic_cast<AI::CompPlayer*>(players.GetActive());
 
@@ -104,15 +111,22 @@ void SinglePlayer::ExecuteFrame() {
             vel *= SHELL_VELOCITY;
             shell = Projectile(pos, vel);
         }
-    }
+    }  */
 
     //
     // Physics
     //
+    phys.Update();
+
+    for(auto& player : players) {
+        const auto& dynBody = phys.Get(player.physicsID);
+        player.position = dynBody.position;
+    }
+
     frameTimeAccumulator += frameClock.restart();
     while( frameTimeAccumulator >= fixedFrameTime ) {
         scroll.Scroll(Input::GetMapScroll(), fixedFrameTime);
-        doPhysics(fixedFrameTime);
+        doPhysics();
         frameTimeAccumulator -= fixedFrameTime;
     }
 
@@ -128,61 +142,45 @@ void SinglePlayer::ExecuteFrame() {
     window.setView(scroll.GetView());
     window.draw(level);
 
-    if(shell.HasExploded()) {
-        window.draw(trajectoryDrawer);
-    }
-
-    for(const auto& player : players) {
-        window.draw(player->GetDrawable()); 
-    }
-
-    window.draw(shell);
+    window.draw(drawer);
 
     window.setView(text.View());
     window.draw(text);
 
     window.setView(scroll.GetView());
     window.display();
+
+
 }
 
 ////////////////////////////////////////////////////////////////////////////////
-void SinglePlayer::doPhysics(const sf::Time& deltaTime) {
-
-    for(auto& tank : players) {
-        tank->GetDrawable().StepPhysics(deltaTime.asSeconds());
-
-        if(Physics::Collides(level, tank->GetDrawable())) {
-            tank->GetDrawable().SetVelocity(-GRAVITY);
-        }
-    }
-
-    shell.StepPhysics(fixedFrameTime.asSeconds());
-
-    // TODO: Physics should probably try collisions
-    // FIXME: Shell get exploded when check for collision but out of bounds;
-    if (Physics::Collides(level, shell)) {
+void SinglePlayer::doPhysics() {
+    if(projectile.has_collided && !projectile.has_exploded) {
         shellExplode();
-    }
-
-    for (auto &tank: players) {
-        if (Physics::Collides(tank->GetDrawable(), shell)) {
-            shellExplode();
-        }
     }
 }
 
 ////////////////////////////////////////////////////////////////////////////////
 void SinglePlayer::shellExplode() {
-    if(shell.HasExploded()) {
-        return;
-    }
+    projectile.has_exploded = true;
 
-    const auto pixels = shell.Explode();
-    level.SetPixels(pixels);
+    const int xPos = static_cast<int>(projectile.position.x);
+    const int yPos = static_cast<int>(projectile.position.y);
+    const auto pix = CreateCircle(xPos, yPos, 50);
+
+    level.SetPixels(pix);
+    phys.SetTerrainPixels(level.GetPixels());
 
     for(auto &player: players) {
-        const auto overlap = CountOverlap(pixels, player);
-        player->GetDrawable().Damage(static_cast<float>(overlap) / 100.F);
+        const auto overlap = Physics::CountOverlap(pix, phys.Get(player.physicsID));
+
+        if(overlap > 0 && !player.dead) {
+            const auto damage = static_cast<float>(overlap) / DAMAGE_REDUCTION;
+            player.health -= damage;
+
+            std::string turnNotice = players[activePlayer].name + " got hit for " + std::to_string(damage) + "damage!";
+            text.CreateTimedText(turnNotice, TURN_NOTICE_SIZE, sf::seconds(2), PresetTxtPos::FirstQuarter, PresetTxtPos::Center);
+        }
     }
 
     playerChange();
@@ -190,20 +188,24 @@ void SinglePlayer::shellExplode() {
 
 ////////////////////////////////////////////////////////////////////////////////
 void SinglePlayer::playerChange() {
-    players.Next();
-    auto* player = players.GetActive();
+    activePlayer++;
 
-    scroll.Focus(player->GetDrawable().GetCenter());
-    std::string turnNotice = player->name + "'s turn!";
+    while(players[activePlayer].health < 0.F) {
+        activePlayer++;
+    }
+
+    scroll.Focus(players[activePlayer].position);
+    std::string turnNotice = players[activePlayer].name + "'s turn!";
     text.CreateTimedText(turnNotice, TURN_NOTICE_SIZE, sf::seconds(2), PresetTxtPos::FirstFourth, PresetTxtPos::Center);
 
+    /*
     if(player->IsComputer()) {
         auto* comp = dynamic_cast<AI::CompPlayer*>(player);
         const auto info = players.EnumeratePlayersData();
 
         comp->UpdateTargeting(info);
         comp->TurnStart();
-    }
+    } */
 }
 
 ////////////////////////////////////////////////////////////////////////////////

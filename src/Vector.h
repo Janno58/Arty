@@ -3,39 +3,78 @@
 #include <SFML/System/Vector2.hpp>
 #include <cmath>
 
+
 ////////////////////////////////////////////////////////////////////////////////
-struct Vec2f {
+template <class T>
+struct Vec2 {
 
     ////////////////////////////////////////////////////////////////////////////
-    constexpr Vec2f() : X(0.F), Y(0.F) { }
+    constexpr Vec2() : x(0), y(0) { }
 
     ////////////////////////////////////////////////////////////////////////////
-    constexpr Vec2f(float xPos, float yPos) : X(xPos), Y(yPos) { }
+    constexpr Vec2(T xPos, T yPos) : x(xPos), y(yPos) { }
 
     ////////////////////////////////////////////////////////////////////////////
-    constexpr Vec2f(const sf::Vector2f& vec) : X(vec.x), Y(vec.y) { }
+    constexpr Vec2(const sf::Vector2<T>& vec) : x(vec.x), y(vec.y) { }
 
     ////////////////////////////////////////////////////////////////////////////
-    sf::Vector2f operator/(float rhs) const {
-        return sf::Vector2f(X, Y) / rhs;
+    Vec2<T> operator+(Vec2<T> rhs) const {
+        return {x + rhs.x, y + rhs.y};
     }
 
     ////////////////////////////////////////////////////////////////////////////
     sf::Vector2f operator-() const {
-        return -sf::Vector2f(X, Y);
+        return -sf::Vector2f(x, y);
+    }
+
+    ////////////////////////////////////////////////////////////////////////////
+    Vec2<T> operator-(Vec2<T> rhs) const {
+        return {x - rhs.x, y - rhs.y};
+    }
+
+    ////////////////////////////////////////////////////////////////////////////
+    void operator*=(T rhs) {
+        x *= rhs;
+        y *= rhs;
     }
 
     ////////////////////////////////////////////////////////////////////////////
     operator sf::Vector2f() const {
-        return {X, Y};
+        return {x, y};
     }
 
     ////////////////////////////////////////////////////////////////////////////
-    float X;
+    T x;
 
     ////////////////////////////////////////////////////////////////////////////
-    float Y;
+    T y;
 };
+
+////////////////////////////////////////////////////////////////////////////////
+using Vec2f = Vec2<float>;
+using Vec2u = Vec2<unsigned int>;
+
+////////////////////////////////////////////////////////////////////////////////
+template <class T>
+Vec2<T> operator/(Vec2<T> vec, float div) {
+    return {vec.x / div, vec.y / div};
+}
+
+
+////////////////////////////////////////////////////////////////////////////////
+template <class T>
+Vec2<T> operator*(Vec2<T> vec, float mul) {
+    return {vec.x * mul, vec.y * mul};
+}
+
+////////////////////////////////////////////////////////////////////////////////
+template <class T>
+Vec2<T>& operator+=(Vec2<T>& lhs, Vec2<T> rhs) {
+    lhs.x += rhs.x;
+    lhs.y += rhs.y;
+    return lhs;
+}
+
 
 ////////////////////////////////////////////////////////////////////////////////
 template <class T>
@@ -52,7 +91,7 @@ float Distance(T vec, T vec2) {
 
 ////////////////////////////////////////////////////////////////////////////////
 template <class T>
-sf::Vector2f Normalize(T vec) {
+T Normalize(T vec) {
     auto mag = Length(vec);
 
     if(mag == 0) {
@@ -60,4 +99,23 @@ sf::Vector2f Normalize(T vec) {
     }
 
     return vec / mag;
+}
+
+////////////////////////////////////////////////////////////////////////////////
+inline float AngleBetweenVectors(Vec2f vec1, Vec2f vec2) {
+    const auto unitVec = vec1 - vec2;
+    const float degreesToRads = 180.F / M_PI;
+    return std::atan2(unitVec.y, unitVec.x) * degreesToRads;
+}
+
+////////////////////////////////////////////////////////////////////////////////
+inline Vec2f RotateAroundPoint(Vec2f origin, Vec2f point, float angle) {
+    const float angleToRads = M_PI / 180.F;
+    angle *= angleToRads;
+    auto translated = point - origin;
+    Vec2f result{0, 0};
+    result.x = (translated.x * std::cos(angle)) - (translated.y * std::sin(angle)) + origin.x;
+    result.y = (translated.y * std::cos(angle)) + (translated.x * std::sin(angle)) + origin.y;
+
+    return result;
 }

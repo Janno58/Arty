@@ -1,7 +1,6 @@
 add_executable(arty Arty.cpp
         Level.cpp Level.h
         WorldScroll.cpp WorldScroll.h
-        Unit.cpp Unit.h
         Physics.cpp Physics.h
         Input.cpp Input.h
         Config.h
@@ -10,7 +9,6 @@ add_executable(arty Arty.cpp
         TextureCache.cpp TextureCache.h
         Pixel.h Pixel.cpp
         Background.cpp Background.h
-        Healthbar.cpp Healthbar.h
         Players.cpp Players.h
         StateMachine.cpp StateMachine.h
         Game.cpp Game.h
@@ -22,7 +20,9 @@ add_executable(arty Arty.cpp
         gui/TextEdit.h
         Player.cpp
         Player.h
-        gui/Config.h)
+        gui/Config.h
+        platform/SFML_Drawer.cpp platform/SFML_Drawer.hpp
+        Types.h)
 
 set_target_properties(arty PROPERTIES
         CXX_STANDARD 23

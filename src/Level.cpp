@@ -1,9 +1,7 @@
 #include "Level.h"
-#include <cstddef>
-#include <fstream>
 #include <iostream>
 #include <filesystem>
-#include <sstream>
+#include <fstream>
 #include <cstring>
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -41,7 +39,7 @@ Level::Level(const std::string& levelName) : vertices(sf::Quads, 4) {
     texture.create(img.getSize().x, img.getSize().y);
     texture.update(img.getPixelsPtr());
 
-    pixels.reserve(static_cast<unsigned int>(img.getSize().x * img.getSize().y *4));
+    pixels = std::vector<uint8_t>(static_cast<unsigned int>(img.getSize().x * img.getSize().y *4), 0);
     std::memcpy(pixels.data(), img.getPixelsPtr(), static_cast<unsigned int>(img.getSize().x * img.getSize().y *4));
 
     background.Create(width, height);
@@ -77,7 +75,13 @@ sf::Color Level::GetPixel(sf::Vector2f pos) const {
 }
 
 ////////////////////////////////////////////////////////////////////////////////
-sf::Vector2f Level::GetSpawn(std::vector<sf::Vector2f>::size_type index) const {
+std::pair<std::vector<uint8_t>, Vec2u> Level::GetPixels() const {
+    return {pixels, { static_cast<unsigned int>(width), static_cast<unsigned int>(height)}};
+}
+
+
+////////////////////////////////////////////////////////////////////////////////
+Vec2f Level::GetSpawn(std::vector<sf::Vector2f>::size_type index) const {
     return spawns.at(index);
 }
 
