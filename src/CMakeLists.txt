@@ -2,7 +2,7 @@ add_executable(arty Arty.cpp
         Level.cpp Level.h
         WorldScroll.cpp WorldScroll.h
         Physics.cpp Physics.h
-        Input.cpp Input.h
+        platform/SFML_Input.cpp platform/SFML_Input.h
         Config.h
         Vector.h
         Projectile.cpp Projectile.h

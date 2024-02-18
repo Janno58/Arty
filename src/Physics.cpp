@@ -8,11 +8,6 @@
 namespace Physics {
 
 ////////////////////////////////////////////////////////////////////////////////
-System::System() {
-    lastUpdate = std::chrono::steady_clock::now();
-}
-
-////////////////////////////////////////////////////////////////////////////////
 size_t System::AddDynamicBody(Vec2f position,
                               Vec2f velocity,
                               float inverseMass,
@@ -62,42 +57,33 @@ int CountOverlap(const Pixels &pixels, const DynamicBody &body) {
 
 ////////////////////////////////////////////////////////////////////////////////
 void System::Update() {
-    auto now = std::chrono::steady_clock::now();
-    accumulator += (now - lastUpdate);
-    lastUpdate = std::chrono::steady_clock::now();
+    for (auto &body: bodies) {
+        body.second.velocity += (GRAVITY / body.second.inverse_mass) * deltaTime;
+        body.second.position += body.second.velocity * deltaTime;
 
-    while (accumulator >= FIXED_PHYSICS_STEP) {
-        accumulator -= FIXED_PHYSICS_STEP;
+        if (Overlaps(body.second.position, body.second.size, body.second.pixels,
+                     Vec2f(0.F, 0.F), terrainDimensions, terrainPixels)) {
+            body.second.velocity = -GRAVITY;
+        }
+    }
 
-        for (auto& body : bodies) {
+    if (projectile != nullptr && !projectile->has_collided) {
+        projectile->velocity += (GRAVITY / projectile->inverse_mass) * deltaTime;
+        projectile->position += projectile->velocity * deltaTime;
+        projectile->rotation = std::atan2(projectile->velocity.y, projectile->velocity.x) * 180.F / M_PIf;
 
-            body.second.velocity += (GRAVITY / body.second.inverse_mass) * deltaTime;
-            body.second.position += body.second.velocity * deltaTime;
+        auto tip = RotateAroundPoint(Vec2f(0.F, 0.F), Vec2f(18.F, 6.F), projectile->rotation);
+        auto ground_collision = Overlaps(tip + projectile->position, Vec2f(0.F, 0.F), terrainDimensions, terrainPixels);
+        bool tank_collision = false;
 
-            if(Overlaps(body.second.position, body.second.size, body.second.pixels,
-                        Vec2f(0.F, 0.F), terrainDimensions, terrainPixels)) {
-                body.second.velocity = -GRAVITY;
+        for (auto &body: bodies) {
+            if (Overlaps(tip + projectile->position, body.second.position, body.second.size, body.second.pixels)) {
+                tank_collision = true;
+                break;
             }
         }
 
-        if (projectile != nullptr && !projectile->has_collided) {
-            projectile->velocity += (GRAVITY / projectile->inverse_mass) * deltaTime;
-            projectile->position += projectile->velocity * deltaTime;
-            projectile->rotation = std::atan2(projectile->velocity.y, projectile->velocity.x) * 180.F / M_PIf;
-
-            auto tip = RotateAroundPoint(Vec2f(0.F, 0.F), Vec2f(18.F, 6.F), projectile->rotation);
-            auto ground_collision = Overlaps(tip + projectile->position, Vec2f(0.F, 0.F), terrainDimensions, terrainPixels);
-            bool tank_collision = false;
-
-            for (auto& body : bodies) {
-                if(Overlaps(tip + projectile->position, body.second.position, body.second.size, body.second.pixels)) {
-                    tank_collision = true;
-                    break;
-                }
-            }
-
-            projectile->has_collided = ground_collision || tank_collision;
-        }
+        projectile->has_collided = ground_collision || tank_collision;
     }
 }
 

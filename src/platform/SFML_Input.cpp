@@ -1,29 +1,29 @@
-#include "Input.h"
+#include "SFML_Input.h"
 
 ////////////////////////////////////////////////////////////////////////////////
 namespace Input {
 
 ////////////////////////////////////////////////////////////////////////////////
-auto GetMapScroll() -> sf::Vector2f
+auto GetMapScroll() -> Vec2f
 {
-    sf::Vector2f vec;
+    Vec2f vec;
 
-    if( sf::Keyboard::isKeyPressed(sf::Keyboard::Left) ||
+    if (sf::Keyboard::isKeyPressed(sf::Keyboard::Left) ||
         sf::Keyboard::isKeyPressed(sf::Keyboard::A) ) {
         vec += {-1.F, 0.F};
     }
 
-    else if(sf::Keyboard::isKeyPressed(sf::Keyboard::Right) ||
+    else if (sf::Keyboard::isKeyPressed(sf::Keyboard::Right) ||
             sf::Keyboard::isKeyPressed(sf::Keyboard::D) ) {
         vec += {1.F, 0.F};
     }
 
-    if(sf::Keyboard::isKeyPressed(sf::Keyboard::Up) ||
+    if (sf::Keyboard::isKeyPressed(sf::Keyboard::Up) ||
        sf::Keyboard::isKeyPressed(sf::Keyboard::W) ) {
         vec += {0.F, -1.F};
     }
 
-    else if(sf::Keyboard::isKeyPressed(sf::Keyboard::Down) ||
+    else if (sf::Keyboard::isKeyPressed(sf::Keyboard::Down) ||
             sf::Keyboard::isKeyPressed(sf::Keyboard::S) ) {
         vec += {0.F, 1.F};
     }

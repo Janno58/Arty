@@ -24,9 +24,9 @@ void WorldScroll::Focus(sf::Vector2f center) {
 }
 
 ////////////////////////////////////////////////////////////////////////////////
-void WorldScroll::Scroll(sf::Vector2f direction, sf::Time deltaTime) {
-    offset.x += direction.x * deltaTime.asSeconds() * ScrollSpeed;
-    offset.y += direction.y * deltaTime.asSeconds() * ScrollSpeed;
+void WorldScroll::Scroll(sf::Vector2f direction, float delta_time) {
+    offset.x += direction.x * delta_time * ScrollSpeed;
+    offset.y += direction.y * delta_time * ScrollSpeed;
 
     const auto min = screenSize * 0.5F;
     const auto max = worldSize - min;

@@ -3,8 +3,8 @@
 #include <memory>
 
 ////////////////////////////////////////////////////////////////////////////////
-constexpr unsigned int DEFAULT_WINDOW_WIDTH = 1024U;
-constexpr unsigned int DEFAULT_WINDOW_HEIGHT = 768U;
+constexpr unsigned int DEFAULT_WINDOW_WIDTH = 1920U;
+constexpr unsigned int DEFAULT_WINDOW_HEIGHT = 1080U;
 constexpr          int DEFAULT_ANTI_ALIASING = 8;
 
 ////////////////////////////////////////////////////////////////////////////////

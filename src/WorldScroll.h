@@ -27,7 +27,7 @@ public:
     void Focus(sf::Vector2f center);
     
     ////////////////////////////////////////////////////////////////////////////
-    void Scroll(sf::Vector2f direction, sf::Time deltaTime);
+    void Scroll(sf::Vector2f direction, float delta_time);
 
 private:
 

@@ -4,7 +4,7 @@
 ////////////////////////////////////////////////////////////////////////////////
 std::optional<Player*> MarkDead(std::vector<Player>& players) {
     for(auto& player : players) {
-        if(player.health < 0.0F) {
+        if(player.health < 0.0F && !player.dead) {
             player.dead = true;
             return {&player};
         }

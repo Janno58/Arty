@@ -2,7 +2,7 @@
 #include "Game.h"
 #include "Players.h"
 #include "TextureCache.h"
-#include "Input.h"
+#include "platform/SFML_Input.h"
 #include <ranges>
 #include <cassert>
 
@@ -44,6 +44,8 @@ SinglePlayer::SinglePlayer(sf::RenderWindow& win,
 
     // @FIXME: Does not seem to actually work
     //scroll.Focus(players.GetActive()->GetDrawable().GetCenter());
+
+    last_update = std::chrono::steady_clock::now();
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -114,20 +116,23 @@ void SinglePlayer::ExecuteFrame() {
     }  */
 
     //
-    // Physics
+    // Physics and other frame time sensitive updates
     //
-    phys.Update();
+    auto now = std::chrono::steady_clock::now();
+    accumulator += (now - last_update);
+    last_update = now;
+    while (accumulator >= FIXED_FRAME_TIME) {
+        accumulator -= FIXED_FRAME_TIME;
 
-    for(auto& player : players) {
-        const auto& dynBody = phys.Get(player.physicsID);
-        player.position = dynBody.position;
+        auto frame_time_secs = std::chrono::duration<float>(FIXED_FRAME_TIME);
+
+        scroll.Scroll(Input::GetMapScroll(), frame_time_secs.count());
+        doPhysics();
     }
 
-    frameTimeAccumulator += frameClock.restart();
-    while( frameTimeAccumulator >= fixedFrameTime ) {
-        scroll.Scroll(Input::GetMapScroll(), fixedFrameTime);
-        doPhysics();
-        frameTimeAccumulator -= fixedFrameTime;
+    for (auto& player : players) {
+        const auto& dynBody = phys.Get(player.physicsID);
+        player.position = dynBody.position;
     }
 
     //
@@ -155,6 +160,8 @@ void SinglePlayer::ExecuteFrame() {
 
 ////////////////////////////////////////////////////////////////////////////////
 void SinglePlayer::doPhysics() {
+    phys.Update();
+
     if(projectile.has_collided && !projectile.has_exploded) {
         shellExplode();
     }
